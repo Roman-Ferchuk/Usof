@@ -1,0 +1,92 @@
+const Comment = require('../entities/Comment');
+
+class CommentRepository {
+    constructor(pool) {
+        this.pool = pool;
+    }
+
+    #mapTOEntity(row) {
+        if (!row) return null;
+        return new Comment({
+            id: row.id,
+            postId: row.post_id,
+            authorId: row.author_id,
+            publishDate: row.publish_date,
+            //status: row.status,
+            content: row.content
+        });
+    }
+
+    async create({ postId, authorId, publishDate = new Date(), content }) {
+        try {
+            const [result] = await this.pool.query(
+                `INSERT INTO usof_database.comments (post_id, author_id, publish_date, content)
+                 VALUES (?, ?, ?, ?)`,
+                 [postId, authorId, publishDate, content]
+            );
+
+            return result.insertId;
+        } catch (error) {
+            console.error('[CommentRepository.create] Error creating comment: ', error.message);
+            throw error;
+        }
+    }
+
+    async getById(id) {
+        try {
+            const [result] = await this.pool.query(
+                `SELECT id, post_id, author_id, publish_date, status, content
+                 FROM usof_database.comments
+                 WHERE id = ?`,
+                 [id]
+            );
+
+            return this.#mapTOEntity(result[0]);
+        } catch (error) {
+            console.error('[CommentRepository.getById] Error getting comment by id: ', error.message);
+            throw error;
+        }
+    }
+
+    async getAllCommentsUnderPostById(id) {
+        try {
+            const [rows] = await this.pool.query(
+                `SELECT id, post_id, author_id, publish_date, status, content
+                 FROM usof_database.comments
+                 WHERE post_id = ?`,
+                 [id]
+            );
+
+            return rows.map(row => this.#mapTOEntity(row));
+        } catch (error) {
+            console.error('[CommentRepository.getById] Error getting comment under post by id: ', error.message);
+            throw error;
+        }
+    }
+
+    async getAllLikesUnderComment(id) {
+        // Not sure that this should be here, maybe like repo
+    }
+
+    async updateCommentData(id, content) {
+        if (!content) {
+            throw new Error(`[CommentRepository.updateCommentData] Update data must be not null`);
+        }
+
+        try {
+            const [result] = await this.pool.query(
+                `UPDATE usof_database.comments
+                 SET content = ?
+                 WHERE id = ?`,
+                 [content, id]
+            );
+
+            return result.affectedRows > 0;
+        } catch (error) {
+            console.error('[CommentRepository.updateCommentData] Error updating comment data: ', error.message);
+            throw error;
+        }
+    }
+}
+
+module.exports = CommentRepository;
