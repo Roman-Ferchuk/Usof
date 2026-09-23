@@ -259,7 +259,7 @@ class UserService {
             || !Number.isInteger(Number(id)) 
             || Number(id) <= 0 
         ) { 
-            throw new Error('Invalid user ID'); 
+            throw new Error('Invalid ID'); 
         } 
     }
 

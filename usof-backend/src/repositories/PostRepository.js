@@ -83,17 +83,101 @@ class PostRepository {
         }
     }
 
+    /**
+     * Fetches posts with filtering, sorting, and pagination.
+     * @param {Object} filters
+     * @param {number} filters.limit - Page size.
+     * @param {number} filters.offset - Offset for pagination.
+     * @param {string} [filters.sort='likes'] - Sorting mode ('likes' or 'date').
+     * @param {number[]} [filters.categoryIds] - Array of category IDs to filter.
+     * @param {Date|string} [filters.dateFrom] - Start date filter.
+     * @param {Date|string} [filters.dateTo] - End date filter.
+     * @param {string} [filters.status] - Specific status filter ('active' | 'inactive').
+     * @param {number|null} filters.userId - ID of current user (null if guest).
+     * @param {string|null} filters.role - Role of current user ('admin' | 'user').
+     * @returns {Promise<Post[]>} Array of Post entities.
+     */
     async getAllWithFilters({
-        limit,
-        offset,
-        sort,
-        categoryId,
-        dateFrom,
-        dateTo,
-        status,
-        includeInactive
+        limit = 10,
+        offset = 0,
+        sort = 'likes',
+        categoryIds = null,
+        dateFrom = null,
+        dateTo = null,
+        status = null,
+        userId = null,
+        role = null
     }) {
-        // TODO
+        try {
+            const whereClauses = [];
+            const queryParams = [];
+
+            if (role === 'admin') {
+                if (status) {
+                    whereClauses.push('p.status = ?');
+                    queryParams.push(status);
+                }
+            } else {
+                if (userId) {
+                    whereClauses.push('(p.status = ? OR p.author_id = ?)');
+                    queryParams.push('active', userId);
+                } else {
+                    whereClauses.push('p.status = ?');
+                    queryParams.push('active');
+                }
+            }
+
+            if (dateFrom) {
+                whereClauses.push('p.publish_date >= ?');
+                queryParams.push(new Date(dateFrom));
+            }
+            if (dateTo) {
+                whereClauses.push('p.publish_date <= ?');
+                queryParams.push(new Date(dateTo));
+            }
+
+            let categoryJoin = '';
+            if (Array.isArray(categoryIds) && categoryIds.length > 0) {
+                categoryJoin = 'INNER JOIN usof_database.post_categories pc ON p.id = pc.post_id';
+                const placeholders = categoryIds.map(() => '?').join(',');
+                whereClauses.push(`pc.category_id IN (${placeholders})`);
+                queryParams.push(...categoryIds);
+            }
+
+            let orderByClause = 'ORDER BY p.publish_date DESC';
+            let selectLikesCount = '';
+            let likesJoin = '';
+
+            if (sort === 'likes') {
+                selectLikesCount = `, COALESCE(SUM(CASE WHEN l.type = 'like' THEN 1 WHEN l.type = 'dislike' THEN -1 ELSE 0 END), 0) AS rating`;
+                likesJoin = `LEFT JOIN usof_database.likes l ON p.id = l.post_id`;
+                orderByClause = `ORDER BY rating DESC, p.publish_date DESC`;
+            } else if (sort === 'date') {
+                orderByClause = `ORDER BY p.publish_date DESC`;
+            }
+
+            const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+            const groupBySql = sort === 'likes' ? 'GROUP BY p.id' : '';
+
+            const sql = `
+                SELECT DISTINCT p.id, p.author_id, p.title, p.publish_date, p.status, p.content ${selectLikesCount}
+                FROM usof_database.posts p
+                ${categoryJoin}
+                ${likesJoin}
+                ${whereSql}
+                ${groupBySql}
+                ${orderByClause}
+                LIMIT ? OFFSET ?
+            `;
+
+            queryParams.push(Number(limit), Number(offset));
+
+            const [rows] = await this.pool.query(sql, queryParams);
+            return rows.map(row => this.#mapToEntity(row));
+        } catch (error) {
+            console.error('[PostRepository.getAllWithFilters] Error fetching posts: ', error.message);
+            throw error;
+        }
     }
 
     /**
@@ -242,6 +326,35 @@ class PostRepository {
             title: row.title,
             description: row.description
         }));
+    }
+
+    /**
+     * Removes category associations from a post.
+     * @param {number} postId 
+     * @param {number[]} [categoryIds] - If omitted, removes all categories associated with the post.
+     * @returns {Promise<boolean>}
+     */
+    async removeCategories(postId, categoryIds = []) {
+        try {
+            if (Array.isArray(categoryIds) && categoryIds.length > 0) {
+                const placeholders = categoryIds.map(() => '?').join(',');
+                const [result] = await this.pool.query(
+                    `DELETE FROM usof_database.post_categories 
+                     WHERE post_id = ? AND category_id IN (${placeholders})`,
+                    [postId, ...categoryIds]
+                );
+                return result.affectedRows > 0;
+            } else {
+                const [result] = await this.pool.query(
+                    `DELETE FROM usof_database.post_categories WHERE post_id = ?`,
+                    [postId]
+                );
+                return result.affectedRows > 0;
+            }
+        } catch (error) {
+            console.error('[PostRepository.removeCategories] Error removing categories: ', error.message);
+            throw error;
+        }
     }
 
     /**

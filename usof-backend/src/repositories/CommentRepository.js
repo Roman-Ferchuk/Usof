@@ -12,7 +12,8 @@ class CommentRepository {
             postId: row.post_id,
             authorId: row.author_id,
             publishDate: row.publish_date,
-            //status: row.status,
+            status: row.status,
+            locked: Boolean(row.locked),
             content: row.content
         });
     }
@@ -35,7 +36,7 @@ class CommentRepository {
     async getById(id) {
         try {
             const [result] = await this.pool.query(
-                `SELECT id, post_id, author_id, publish_date, status, content
+                `SELECT id, post_id, author_id, publish_date, status, locked, content
                  FROM usof_database.comments
                  WHERE id = ?`,
                  [id]
@@ -51,7 +52,7 @@ class CommentRepository {
     async getAllCommentsUnderPostById(id) {
         try {
             const [rows] = await this.pool.query(
-                `SELECT id, post_id, author_id, publish_date, status, content
+                `SELECT id, post_id, author_id, publish_date, status, locked, content
                  FROM usof_database.comments
                  WHERE post_id = ?`,
                  [id]
@@ -64,29 +65,84 @@ class CommentRepository {
         }
     }
 
-    async getAllLikesUnderComment(id) {
-        // Not sure that this should be here, maybe like repo
-    }
+    // async getAllLikesUnderComment(id) {
+    //     // Not sure that this should be here, maybe like repo
+    // }
 
-    async updateCommentData(id, content) {
-        if (!content) {
-            throw new Error(`[CommentRepository.updateCommentData] Update data must be not null`);
+    async updateCommentStatus(id, status) {
+        if (!['active', 'inactive'].includes(status)) {
+            throw new Error(`[CommentRepository.updateCommentStatus] Invalid status: ${status}`);
         }
-
+        
         try {
             const [result] = await this.pool.query(
                 `UPDATE usof_database.comments
-                 SET content = ?
-                 WHERE id = ?`,
-                 [content, id]
+                 SET status = ?
+                 WHERE id = ?`, 
+                [status, id]
             );
-
+            
             return result.affectedRows > 0;
         } catch (error) {
-            console.error('[CommentRepository.updateCommentData] Error updating comment data: ', error.message);
+            console.error('[CommentRepository.updateCommentStatus] Error updating comment status: ', error.message);
             throw error;
         }
     }
+
+    async updateCommentLock(id, locked) {
+        if (typeof locked !== 'boolean') {
+            throw new Error('[CommentRepository.updateCommentLock] Locked must be boolean');
+        }
+        
+        try {
+            const [result] = await this.pool.query(
+                `UPDATE usof_database.comments
+                 SET locked = ?
+                 WHERE id = ?`, 
+                [locked, id]
+            );
+            
+            return result.affectedRows > 0;
+        } catch (error) {
+            console.error('[CommentRepository.updateCommentLock] Error updating comment lock: ', error.message);
+            throw error;
+        }
+    }
+
+    async deleteComment(id) {
+        try {
+            const [result] = await this.pool.query(
+                `DELETE FROM usof_database.comments 
+                 WHERE id = ?`,
+                [id]
+            );
+            
+            return result.affectedRows > 0;
+        } catch (error) {
+            console.error('[CommentRepository.deleteComment] Error deleting comment: ', error.message);
+            throw error;
+        }
+    }
+
+    // async updateCommentData(id, content) {
+    //     if (!content) {
+    //         throw new Error(`[CommentRepository.updateCommentData] Update data must be not null`);
+    //     }
+
+    //     try {
+    //         const [result] = await this.pool.query(
+    //             `UPDATE usof_database.comments
+    //              SET content = ?
+    //              WHERE id = ?`,
+    //              [content, id]
+    //         );
+
+    //         return result.affectedRows > 0;
+    //     } catch (error) {
+    //         console.error('[CommentRepository.updateCommentData] Error updating comment data: ', error.message);
+    //         throw error;
+    //     }
+    // }
 }
 
 module.exports = CommentRepository;

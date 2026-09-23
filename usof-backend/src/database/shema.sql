@@ -63,12 +63,18 @@ CREATE TABLE IF NOT EXISTS usof_database.comments (
     post_id INT NOT NULL,
     author_id INT NOT NULL,
     publish_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    --status ENUM('active', 'inactive') NOT NULL DEFAULT 'active', 
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    locked BOOLEAN NOT NULL DEFAULT FALSE,
     content TEXT NOT NULL,
 
     PRIMARY KEY (id),
-    FOREIGN KEY (post_id) REFERENCES usof_database.posts(id) ON DELETE CASCADE,
-    FOREIGN KEY (author_id) REFERENCES usof_database.users(id) ON DELETE CASCADE 
+    FOREIGN KEY (post_id)
+        REFERENCES usof_database.posts(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (author_id)
+        REFERENCES usof_database.users(id)
+        ON DELETE CASCADE
 );
 
 -- 7. Таблиця лайків

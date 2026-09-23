@@ -6,7 +6,7 @@ class Comment extends BaseEntity {
         postId,
         authorId,
         publishDate = new Date(),
-        //status,
+        status,
         content
     }) {
         super(id);
@@ -14,7 +14,7 @@ class Comment extends BaseEntity {
         this.postId = postId;
         this.authorId = authorId;
         this.publishDate = publishDate;
-        //this.status = status;
+        this.status = status;
         this.content = content;
 
         this.validate();
