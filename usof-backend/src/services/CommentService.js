@@ -1,12 +1,12 @@
 class CommentService {
     constructor(
         commentRepository,
-        postRepository,
-        likeRepository
+        postRepository
+        //likeRepository
     ) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
-        this.likeRepository = likeRepository;
+        //this.likeRepository = likeRepository;
     }
 
     async createComment({
@@ -218,3 +218,5 @@ class CommentService {
         }
     }
 }
+
+module.exports = CommentService;

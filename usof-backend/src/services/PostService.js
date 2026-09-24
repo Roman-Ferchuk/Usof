@@ -1,7 +1,3 @@
-const PostRepository = require('../repositories/PostRepository');
-const CategoryRepository = require('../repositories/CategoryRepository');
-const PostImageRepository = require('../repositories/PostImageRepository');
-
 class PostService {
     constructor({ 
         postRepository, 
@@ -188,7 +184,7 @@ class PostService {
         }
 
         if (data.content !== undefined) {
-            if (isAdmin) {
+            if (isAdmin && !isOwner) {
                 throw new Error('Admin cannot edit post content');
             }
 
@@ -218,6 +214,30 @@ class PostService {
             await this.#validateCategoriesExist(data.categories);
 
             await this.#replaceCategories(postId, data.categories);
+        }
+
+        return this.postRepository.getById(postId);
+    }
+
+    async updatePostLock(postId, locked, userRole) {
+        this.#validateId(postId);
+
+        if (userRole !== 'admin') {
+            throw new Error('Only admin can change locked of post');
+        }
+
+        if (typeof locked !== 'boolean') {
+            throw new Error('Locked must be a boolean value');
+        }
+
+        const post = await this.postRepository.getById(postId);
+        if (!post) {
+            throw new Error('Post not found');
+        }
+
+        const updated = await this.postRepository.updatePostLock(postId, locked);
+        if (!updated) {
+            throw new Error('Failed to update locked');
         }
 
         return this.postRepository.getById(postId);
@@ -358,3 +378,5 @@ class PostService {
         await this.postRepository.addCategories(postId, categories);
     }
 }
+
+module.exports = PostService;

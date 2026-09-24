@@ -7,6 +7,7 @@ class Comment extends BaseEntity {
         authorId,
         publishDate = new Date(),
         status,
+        locked,
         content
     }) {
         super(id);
@@ -15,6 +16,7 @@ class Comment extends BaseEntity {
         this.authorId = authorId;
         this.publishDate = publishDate;
         this.status = status;
+        this.locked = locked;
         this.content = content;
 
         this.validate();

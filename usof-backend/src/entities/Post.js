@@ -13,6 +13,7 @@ class Post extends BaseEntity {
         publishDate = new Date(),
         content,
         status = PostStatus.ACTIVE,
+        locked = falslse,
         categories = [],
         images = []
     }) {
@@ -22,6 +23,7 @@ class Post extends BaseEntity {
         this.title = title;
         this.publishDate = publishDate;
         this.status = status;
+        this.locked = locked;
         this.content = content;
 
         this.categories = categories;

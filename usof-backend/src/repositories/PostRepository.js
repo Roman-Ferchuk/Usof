@@ -18,6 +18,7 @@ class PostRepository {
             title: row.title,
             publishDate: row.publish_date,
             status: row.status,
+            locked: Boolean(row.locked),
             content: row.content,
         });
     }
@@ -247,6 +248,22 @@ class PostRepository {
             return result.affectedRows > 0;
         } catch (error) {
             console.error('[PostRepository.updatePostData] Error updating post: ', error.message);
+            throw error;
+        }
+    }
+
+    async updatePostLock(postId, locked){
+        try {
+            const [result] = await this.pool.query(
+                `UPDATE usof_database.posts
+                 SET locked = ?
+                 WHERE id = ?`,
+                [locked, postId]
+            );
+
+            return result.affectedRows > 0;
+        } catch (error) {
+            console.error('[PostRepository.updatePostLock] Error updating post locked: ', error.message);
             throw error;
         }
     }

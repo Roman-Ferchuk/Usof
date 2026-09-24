@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS usof_database.posts (
     title VARCHAR(255) NOT NULL,
     publish_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    locked BOOLEAN NOT NULL DEFAULT FALSE,
     content TEXT NOT NULL,
 
     PRIMARY KEY (id),

@@ -93,6 +93,38 @@ class LikeRepository {
         }
     }
 
+    async getByUserAndPost(userId, postId) {
+        try {
+            const [rows] = await this.pool.query(
+                `SELECT id, author_id, type, publish_date, post_id, comment_id
+                 FROM usof_database.likes
+                 WHERE author_id = ? AND post_id = ?`,
+                [userId, postId]
+            );
+
+            return this.#mapToEntity(rows[0]);
+        } catch (error) {
+            console.error('[LikeRepository.getByUserAndPost] Error getting like: ', error.message);
+            throw error;
+        }
+    }
+
+    async getByUserAndComment(userId, commentId) {
+        try {
+            const [rows] = await this.pool.query(
+                `SELECT id, author_id, type, publish_date, post_id, comment_id
+                 FROM usof_database.likes
+                 WHERE author_id = ? AND comment_id = ?`,
+                [userId, commentId]
+            );
+
+            return this.#mapToEntity(rows[0]);
+        } catch (error) {
+            console.error('[LikeRepository.getByUserAndComment] Error getting like: ', error.message);
+            throw error;
+        }
+    }
+
     async updateType(id, type) {
         if (!Object.values(LikeType).includes(type)) {
             throw new Error(`[LikeRepository.updateType] Invalid like type: ${type}`);
