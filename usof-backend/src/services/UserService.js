@@ -1,14 +1,31 @@
 const bcrypt = require('bcrypt');
 
+/**
+ * Service providing business logic for user management and authentication.
+ */
 class UserService {
+    /**
+     * Creates an instance of UserService.
+     * @param {Object} userRepository - Data access repository for users.
+     */
     constructor(userRepository) {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Retrieves all registered users.
+     * @returns {Promise<User[]>} Array of User entities.
+     */
     async getAllUsers() {
         return this.userRepository.getAll();
     }
 
+    /**
+     * Gets a user entity by unique identifier.
+     * @param {number|string} userId - ID of the user.
+     * @returns {Promise<User>} The corresponding user entity.
+     * @throws {Error} If ID format is invalid or user is not found.
+     */
     async getUserById(userId) { 
         this.#validateId(userId); 
         
@@ -21,6 +38,12 @@ class UserService {
         return user; 
     }
 
+    /**
+     * Finds a user entity by login or email address.
+     * @param {string} identifier - User's login or email.
+     * @returns {Promise<User|null>} User entity if found, otherwise null.
+     * @throws {Error} If identifier is missing or invalid type.
+     */
     async getUserByLoginOrEmail(identifier) { 
         if (!identifier || typeof identifier !== 'string') {
             throw new Error('Login or email is required'); 
@@ -29,6 +52,18 @@ class UserService {
         return this.userRepository.getByLoginOrEmail(identifier.trim()); 
     }
 
+    /**
+     * Registers a new user with hashed password after validation and uniqueness checks.
+     * @param {Object} params - User registration details.
+     * @param {string} params.login - Desired username.
+     * @param {string} params.password - Plaintext password.
+     * @param {string} params.passwordConfirmation - Password confirmation for matching.
+     * @param {string} params.fullName - User's full name.
+     * @param {string} params.email - User's email address.
+     * @param {string} [params.role='user'] - User system role ('user' or 'admin').
+     * @returns {Promise<User>} Newly created user entity.
+     * @throws {Error} If validation fails or credentials are already in use.
+     */
     async createUser({ 
         login, 
         password, 
@@ -43,16 +78,16 @@ class UserService {
             passwordConfirmation, 
             fullName, 
             email 
-        })
+        });
 
         this.#validateRole(role);
 
-        this.#ensureLoginIsUnique(login);
-        this.#ensureEmailIsUnique(email);
+        await this.#ensureLoginIsUnique(login);
+        await this.#ensureEmailIsUnique(email);
 
         const passwordHash = await bcrypt.hash(password, 12);
 
-        const userId = await this.userRepository.createUser({
+        const userId = await this.userRepository.create({
             login,
             passwordHash,
             fullName,
@@ -63,24 +98,25 @@ class UserService {
         return this.userRepository.getById(userId);
     }
 
-    async register({
-        login, 
-        password, 
-        passwordConfirmation, 
-        fullName, 
-        email, 
-        role = 'user' 
-    }) {
-        return this.createUser({
-            login, 
-            password, 
-            passwordConfirmation, 
-            fullName, 
-            email, 
-            role
-        });
+    /**
+     * Alias method for createUser.
+     * @param {Object} params - Registration params identical to createUser.
+     * @returns {Promise<User>} Newly registered user entity.
+     */
+    async register(params) {
+        return this.createUser(params);
     }
 
+    /**
+     * Updates user profile attributes with access control checks.
+     * @param {Object} params - Update context parameters.
+     * @param {number|string} params.userId - Target user ID to update.
+     * @param {Object} params.data - Attributes to update (login, email, fullName, profilePicture).
+     * @param {number|string} params.curentUserId - ID of the user performing the update.
+     * @param {string} params.currentUserRole - Role of the user performing the update.
+     * @returns {Promise<User>} Updated user entity.
+     * @throws {Error} If permissions are invalid, validation fails, or update operation fails.
+     */
     async updateProfile({
         userId,
         data,
@@ -91,14 +127,14 @@ class UserService {
         this.#validateId(curentUserId);
         this.#validateRole(currentUserRole);
 
-        const isOwner = Number(userId) === Number(currentUserId); 
+        const isOwner = Number(userId) === Number(curentUserId); 
         const isAdmin = currentUserRole === 'admin';
 
         if (!isOwner && !isAdmin) {
             throw new Error('Forbidden');
         }
 
-        const user = this.userRepository.getById(userId);
+        const user = await this.getUserById(userId);
 
         if (data.login !== undefined) {
             this.#validateLogin(data.login);
@@ -110,19 +146,18 @@ class UserService {
         }
 
         if (data.email !== undefined) {
-            this.#validateEmail(user.email);
+            this.#validateEmail(data.email);
             const email = data.email.trim().toLowerCase();
 
             if (email !== user.email) {
                 await this.#ensureEmailIsUnique(email);
-                user.email = data.email;
+                user.email = email;
                 user.emailConfirmed = false;
             }
         }
 
         if (data.fullName !== undefined) {
-            this.#validateFullName(user.fullName);
-
+            this.#validateFullName(data.fullName);
             user.fullName = data.fullName.trim();
         }
 
@@ -139,6 +174,13 @@ class UserService {
         return this.getUserById(user.id);
     }
 
+    /**
+     * Changes role for a specified user.
+     * @param {number|string} userId - Target user ID.
+     * @param {string} role - New role ('user' or 'admin').
+     * @returns {Promise<User>} Updated user entity.
+     * @throws {Error} If role or ID is invalid, or update operation fails.
+     */
     async changeRole(userId, role) { 
         this.#validateId(userId); 
         this.#validateRole(role); 
@@ -155,6 +197,16 @@ class UserService {
         return this.getUserById(user.id);
     }
 
+    /**
+     * Updates account password after optional current password verification.
+     * @param {Object} params - Password update data.
+     * @param {number|string} params.userId - Target user ID.
+     * @param {string} params.newPassword - New plaintext password.
+     * @param {string} params.newPasswordConfirmation - Password confirmation.
+     * @param {string|null} [params.oldPassword=null] - Current password for authorization.
+     * @returns {Promise<boolean>} True if update succeeded.
+     * @throws {Error} If passwords mismatch, criteria aren't met, or old password is incorrect.
+     */
     async changePassword({
         userId,
         newPassword,
@@ -167,7 +219,7 @@ class UserService {
             || typeof newPassword !== 'string' 
             || newPassword.length < 8
         ) {
-            throw new Error( 'Password must contain at least 8 characters' );        
+            throw new Error('Password must contain at least 8 characters');        
         }
 
         if (newPassword !== newPasswordConfirmation) { 
@@ -177,9 +229,9 @@ class UserService {
         const user = await this.userRepository.getById(userId);
 
         if (oldPassword !== null) {
-            const isValid = bcrypt.compare(
+            const isValid = await bcrypt.compare(
                 oldPassword,
-                user.password
+                user.passwordHash
             );
 
             if (!isValid) {
@@ -192,6 +244,12 @@ class UserService {
         return this.userRepository.updatePassword(userId, passwordHash);
     }
 
+    /**
+     * Compares plain password with user's stored password hash.
+     * @param {User} user - User entity instance.
+     * @param {string} password - Plaintext password to verify.
+     * @returns {Promise<boolean>} True if valid match, false otherwise.
+     */
     async verifyPassword(user, password) {
         if (!user || !user.passwordHash) { 
             return false; 
@@ -200,6 +258,11 @@ class UserService {
         return bcrypt.compare(password, user.passwordHash);
     }
 
+    /**
+     * Sets user's email status to confirmed.
+     * @param {number|string} userId - User ID.
+     * @returns {Promise<boolean>} True if email is confirmed or successfully set.
+     */
     async confirmEmail(userId) { 
         this.#validateId(userId); 
         
@@ -211,6 +274,16 @@ class UserService {
         return this.userRepository.confirmEmail(userId); 
     }
 
+    /**
+     * Updates avatar file path for a user with authorization checks.
+     * @param {Object} params - Avatar upload options.
+     * @param {number|string} params.userId - Target user ID.
+     * @param {string} params.avatarPath - System or public path to uploaded image.
+     * @param {number|string} params.curentUserId - ID of user making request.
+     * @param {string} params.currentUserRole - Role of user making request.
+     * @returns {Promise<User>} Updated user entity.
+     * @throws {Error} If permissions are invalid or update fails.
+     */
     async updateAvatar({
         userId,
         avatarPath,
@@ -221,7 +294,7 @@ class UserService {
         this.#validateId(curentUserId);
         this.#validateRole(currentUserRole);
 
-        const isOwner = Number(userId) === Number(currentUserId); 
+        const isOwner = Number(userId) === Number(curentUserId); 
         const isAdmin = currentUserRole === 'admin';
 
         if (!isOwner && !isAdmin) {
@@ -232,15 +305,21 @@ class UserService {
             throw new Error('Avatar path is required'); 
         }
 
-        const updated = this.userRepository.uploadAvatar(userId, avatarPath);
+        const updated = await this.userRepository.uploadAvatar(userId, avatarPath);
 
         if (!updated) {
-            throw new Error('User not found')
+            throw new Error('User not found');
         }
 
         return this.getUserById(userId);
     }
 
+    /**
+     * Permanently removes a user record by ID.
+     * @param {number|string} userId - User ID to delete.
+     * @returns {Promise<boolean>} True if record was deleted.
+     * @throws {Error} If user is not found.
+     */
     async deleteUser(userId) {
         this.#validateId(userId);
 
@@ -253,8 +332,14 @@ class UserService {
         return this.userRepository.deleteUser(userId);
     }
 
+    /**
+     * Validates integer database ID.
+     * @private
+     * @param {any} id - Value to validate.
+     * @throws {Error} If value is not a positive integer.
+     */
     #validateId(id) { 
-        if ( id === undefined 
+        if (id === undefined 
             || id === null 
             || !Number.isInteger(Number(id)) 
             || Number(id) <= 0 
@@ -263,6 +348,12 @@ class UserService {
         } 
     }
 
+    /**
+     * Validates full registration payload.
+     * @private
+     * @param {Object} params
+     * @throws {Error} If any field validation fails.
+     */
     #validateRegistrationData({
         login, 
         password, 
@@ -275,10 +366,10 @@ class UserService {
         this.#validateFullName(fullName);
 
         if (!password 
-            || typeof password != 'string'
+            || typeof password !== 'string'
             || password.length < 8
         ) {
-            throw new Error('Password must contain at least 8 characters' );
+            throw new Error('Password must contain at least 8 characters');
         }
 
         if (password !== passwordConfirmation) { 
@@ -286,23 +377,35 @@ class UserService {
         }
     }
 
+    /**
+     * Validates login field format and length.
+     * @private
+     * @param {string} login
+     * @throws {Error} If length or character requirements are missed.
+     */
     #validateLogin(login) {
         if (!login || typeof login !== 'string' 
             || login.trim().length < 3 
             || login.trim().length > 50 
         ) { 
-            throw new Error('Login must contain from 3 to 50 characters' ); 
+            throw new Error('Login must contain from 3 to 50 characters'); 
         } 
         
         if (!/^[a-zA-Z0-9_.-]+$/.test(login.trim())) { 
-            throw new Error( 'Login contains invalid characters' ); 
+            throw new Error('Login contains invalid characters'); 
         }
     }
 
+    /**
+     * Validates email format and max length.
+     * @private
+     * @param {string} email
+     * @throws {Error} If format is invalid or too long.
+     */
     #validateEmail(email) {
-        if (!email || typeof email != 'string' || email.trim().length < 5) {
+        if (!email || typeof email !== 'string' || email.trim().length < 5) {
             throw new Error('Email is required');
-        }
+        } 
         
         const normalizedEmail = email.trim().toLowerCase(); 
         if (normalizedEmail.length > 255) { 
@@ -315,25 +418,40 @@ class UserService {
         }
     }
 
+    /**
+     * Validates user full name length.
+     * @private
+     * @param {string} fullName
+     * @throws {Error} If string length is out of range (2-100 chars).
+     */
     #validateFullName(fullName) {
-        if (!fullName || typeof fullName != 'string'
+        if (!fullName || typeof fullName !== 'string'
             || fullName.trim().length < 2
             || fullName.trim().length > 100
         ) {
             throw new Error('Full name must contain from 2 to 100 characters');
         }
-
-        // if (!/^A-Z[a-z]+ A-Z[a-z]+$/.test(fullName)) {
-        //     throw new Error('Invalid full name format');
-        // }
     }
 
+    /**
+     * Validates system user role.
+     * @private
+     * @param {string} role
+     * @throws {Error} If role is not 'user' or 'admin'.
+     */
     #validateRole(role) {
         if (!['user', 'admin'].includes(role)) {
-            throw new Error( 'Role must be either user or admin' );
+            throw new Error('Role must be either user or admin');
         }
     }
 
+    /**
+     * Checks if login is available.
+     * @private
+     * @param {string} login
+     * @returns {Promise<void>}
+     * @throws {Error} If login is already taken.
+     */
     async #ensureLoginIsUnique(login) {
         const foundUser = await this.userRepository.findBy(
             'login',
@@ -345,6 +463,13 @@ class UserService {
         }
     }
 
+    /**
+     * Checks if email address is available.
+     * @private
+     * @param {string} email
+     * @returns {Promise<void>}
+     * @throws {Error} If email is already taken.
+     */
     async #ensureEmailIsUnique(email) {
         const normalizedEmail = email.trim().toLowerCase();
 

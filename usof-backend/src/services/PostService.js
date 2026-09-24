@@ -1,4 +1,14 @@
+/**
+ * Service handling business logic for posts, their categories, images, and permissions.
+ */
 class PostService {
+    /**
+     * Creates an instance of PostService.
+     * @param {Object} repositories - Injection object containing repository instances.
+     * @param {Object} repositories.postRepository - Repository for post entity persistence.
+     * @param {Object} repositories.categoryRepository - Repository for category data access.
+     * @param {Object} repositories.postImageRepository - Repository for post image handling.
+     */
     constructor({ 
         postRepository, 
         categoryRepository, 
@@ -9,6 +19,17 @@ class PostService {
         this.postImageRepository = postImageRepository; 
     }
 
+    /**
+     * Creates a new post with optional categories and images.
+     * @param {Object} params - Post creation parameters.
+     * @param {number|string} params.authorId - ID of the user creating the post.
+     * @param {string} params.title - Title of the post.
+     * @param {string} params.content - Main body content.
+     * @param {number[]} [params.categories=[]] - Array of category IDs to associate.
+     * @param {string[]} [params.images=[]] - Array of image file paths.
+     * @returns {Promise<Object>} Created post entity.
+     * @throws {Error} If validation fails or specified categories do not exist.
+     */
     async createPost({
         authorId,
         title,
@@ -41,7 +62,7 @@ class PostService {
             });
         }
 
-        return this.getPostById(postId, {
+        return await this.getPostById(postId, {
             userId: authorId,
             role: 'user'
         });
@@ -49,17 +70,18 @@ class PostService {
 
     /**
      * Fetches paginated posts based on filters, sorting, and user role/permissions.
-     * @param {Object} options
-     * @param {number} [options.page=1]
-     * @param {number} [options.limit=10]
-     * @param {string} [options.sort='likes'] - 'likes' | 'date'
-     * @param {number[]} [options.categoryIds]
-     * @param {Date|string} [options.dateFrom]
-     * @param {Date|string} [options.dateTo]
-     * @param {string} [options.status]
-     * @param {number} [options.userId]
-     * @param {string} [options.role]
-     * @returns {Promise<Object>} Paginated post list with metadata.
+     * @param {Object} options - Filtering and pagination options.
+     * @param {number|string} [options.page=1] - Current page index.
+     * @param {number|string} [options.limit=10] - Number of items per page.
+     * @param {string} [options.sort='likes'] - Sorting strategy ('likes' | 'date').
+     * @param {number[]} [options.categoryIds=null] - Optional category filter IDs.
+     * @param {Date|string} [options.dateFrom=null] - Lower bound date filter.
+     * @param {Date|string} [options.dateTo=null] - Upper bound date filter.
+     * @param {string} [options.status=null] - Filter post status ('active' | 'inactive').
+     * @param {number|string} [options.userId=null] - Context user ID requesting posts.
+     * @param {string} [options.role=null] - Role of requesting user ('user' | 'admin').
+     * @returns {Promise<Object>} Paginated result object containing metadata and post list.
+     * @throws {Error} If pagination or status parameters are invalid.
      */
     async getPosts({
         page = 1,
@@ -99,6 +121,15 @@ class PostService {
         };
     }
 
+    /**
+     * Retrieves a single post by ID with status visibility checks.
+     * @param {number|string} postId - ID of the target post.
+     * @param {Object} [context={}] - Requesting user context.
+     * @param {number|string} [context.userId=null] - Requesting user ID.
+     * @param {string} [context.role=null] - Requesting user role.
+     * @returns {Promise<Object>} The target post object.
+     * @throws {Error} If post doesn't exist or is inactive and requester isn't owner/admin.
+     */
     async getPostById(
         postId, 
         { 
@@ -119,7 +150,6 @@ class PostService {
         }
 
         const isOwner = userId !== null && Number(post.authorId) === Number(userId);
-
         const isAdmin = role === 'admin';
 
         if (!isOwner && !isAdmin) { 
@@ -129,6 +159,12 @@ class PostService {
         return post;
     }
 
+    /**
+     * Gets all categories associated with a specific post.
+     * @param {number|string} postId - ID of the post.
+     * @returns {Promise<Object[]>} Array of associated category entities.
+     * @throws {Error} If post ID is invalid or post does not exist.
+     */
     async getPostCategories(postId) {
         this.#validateId(postId);
 
@@ -141,6 +177,12 @@ class PostService {
         return this.postRepository.getCategories(postId);
     }
 
+    /**
+     * Gets all images attached to a specific post.
+     * @param {number|string} postId - ID of the post.
+     * @returns {Promise<Object[]>} Array of attached image entities/paths.
+     * @throws {Error} If post ID is invalid or post does not exist.
+     */
     async getPostImages(postId) {
         this.#validateId(postId);
 
@@ -153,6 +195,16 @@ class PostService {
         return this.postImageRepository.getImagesInPost(postId);
     }
 
+    /**
+     * Updates an existing post with strict role permission enforcement.
+     * @param {Object} params - Update parameters.
+     * @param {number|string} params.postId - ID of the post to update.
+     * @param {Object} params.data - Attributes to update (title, content, status, categories).
+     * @param {number|string} params.userId - ID of the requesting user.
+     * @param {string} params.userRole - Role of the requesting user ('user' | 'admin').
+     * @returns {Promise<Object>} The updated post instance.
+     * @throws {Error} If non-owner/non-admin attempts update, or admin tries editing content.
+     */
     async updatePost({
         postId,
         data,
@@ -178,8 +230,8 @@ class PostService {
         if (data.title !== undefined) {
             this.#validateTitle(data.title);
 
-            if (data.title !== post.title) {
-                post.title = data.title;
+            if (data.title.trim() !== post.title) {
+                post.title = data.title.trim();
             }
         }
 
@@ -190,8 +242,8 @@ class PostService {
 
             this.#validateContent(data.content);
 
-            if (data.content !== post.content) {
-                post.content = data.content;
+            if (data.content.trim() !== post.content) {
+                post.content = data.content.trim();
             }
         }
 
@@ -207,7 +259,7 @@ class PostService {
             }
         }
 
-        this.postRepository.save(post);
+        await this.postRepository.save(post);
 
         if (data.categories !== undefined) {
             this.#validateCategories(data.categories);
@@ -219,6 +271,14 @@ class PostService {
         return this.postRepository.getById(postId);
     }
 
+    /**
+     * Updates the locked status of a post (Admin only).
+     * @param {number|string} postId - ID of the target post.
+     * @param {boolean} locked - New lock state.
+     * @param {string} userRole - Role of requesting user.
+     * @returns {Promise<Object>} Updated post entity.
+     * @throws {Error} If requester is not admin or lock value is non-boolean.
+     */
     async updatePostLock(postId, locked, userRole) {
         this.#validateId(postId);
 
@@ -243,6 +303,13 @@ class PostService {
         return this.postRepository.getById(postId);
     }
 
+    /**
+     * Directly updates a post's status.
+     * @param {number|string} postId - Target post ID.
+     * @param {string} status - New status ('active' | 'inactive').
+     * @returns {Promise<Object>} Updated post entity.
+     * @throws {Error} If post isn't found or DB operation fails.
+     */
     async updatePostStatus(postId, status) {
         this.#validateId(postId);
         this.#validateStatus(status);
@@ -253,8 +320,7 @@ class PostService {
             throw new Error('Post not found');
         }
 
-        const updated = 
-            await this.postRepository.updatePostData(postId, 'status', status);
+        const updated = await this.postRepository.updatePostData(postId, 'status', status);
         
         if (!updated) {
             throw new Error('Failed to update post status');
@@ -263,6 +329,14 @@ class PostService {
         return this.postRepository.getById(postId);
     }
 
+    /**
+     * Deletes a post and its associated images.
+     * @param {number|string} postId - ID of post to delete.
+     * @param {number|string} userId - Requesting user ID.
+     * @param {string} userRole - Requesting user role.
+     * @returns {Promise<boolean>} True on success.
+     * @throws {Error} If user lacks permission or deletion fails.
+     */
     async deletePost(
         postId,
         userId,
@@ -294,6 +368,13 @@ class PostService {
         return true;
     }
 
+    /**
+     * Checks if a specified user has rights to modify a post.
+     * @param {Object} post - Post entity.
+     * @param {number|string} userId - User ID to check.
+     * @param {string} userRole - User role to check.
+     * @returns {boolean} True if user is post author or an admin.
+     */
     canModifyPost(post, userId, userRole) {
         if (!post) {
             return false;
@@ -306,6 +387,12 @@ class PostService {
         return Number(userId) === Number(post.authorId);
     }
 
+    /**
+     * Validates integer database ID format.
+     * @private
+     * @param {any} id - Value to validate.
+     * @throws {Error} If ID is missing, not an integer, or <= 0.
+     */
     #validateId(id) { 
         if (id === undefined 
             || id === null 
@@ -316,6 +403,12 @@ class PostService {
         } 
     }
 
+    /**
+     * Validates post title length.
+     * @private
+     * @param {string} title - Title string to check.
+     * @throws {Error} If title length is outside 3..255 range.
+     */
     #validateTitle(title) {
         if (typeof title !== 'string' 
             || title.trim().length < 3 
@@ -325,6 +418,12 @@ class PostService {
         }
     }
 
+    /**
+     * Validates non-empty post content.
+     * @private
+     * @param {string} content - Content string to check.
+     * @throws {Error} If content is empty or invalid.
+     */
     #validateContent(content) {
         if (typeof content !== 'string'
             || content.trim().length < 1
@@ -333,32 +432,58 @@ class PostService {
         }
     }
 
+    /**
+     * Validates category array and inner IDs.
+     * @private
+     * @param {Array} categories - Array of category IDs.
+     * @throws {Error} If parameter isn't an array or contains invalid IDs.
+     */
     #validateCategories(categories) {
         if (!Array.isArray(categories)) { 
             throw new Error('Categories must be an array'); 
-        }
+        } 
         
         for (const categoryId of categories) { 
             this.#validateId(categoryId);
         }
     }
 
+    /**
+     * Validates status string.
+     * @private
+     * @param {string} status - Status value.
+     * @throws {Error} If status is not 'active' or 'inactive'.
+     */
     #validateStatus(status) {
         if (!['active', 'inactive'].includes(status)) { 
             throw new Error('Post status must be active or inactive'); 
         } 
     }
 
+    /**
+     * Validates pagination parameters.
+     * @private
+     * @param {number|string} page - Page number.
+     * @param {number|string} limit - Items per page.
+     * @throws {Error} If values are non-integers or <= 0.
+     */
     #validatePagination(page, limit) {
         if (!Number.isInteger(Number(page)) || Number(page) < 1) {
-            throw new Error('Page must be a positive integer')
+            throw new Error('Page must be a positive integer');
         }
 
         if (!Number.isInteger(Number(limit)) || Number(limit) < 1) {
-            throw new Error('Limit must be a positive integer')
+            throw new Error('Limit must be a positive integer');
         }
     }
 
+    /**
+     * Verifies that provided category IDs exist in storage.
+     * @private
+     * @param {number[]} categoryIds - Category IDs array.
+     * @returns {Promise<void>}
+     * @throws {Error} If any category does not exist.
+     */
     async #validateCategoriesExist(categoryIds) {
         for (const categoryId of categoryIds) {
             const category = await this.categoryRepository.getById(categoryId);
@@ -369,6 +494,13 @@ class PostService {
         }
     }
 
+    /**
+     * Replaces existing post categories with new ones.
+     * @private
+     * @param {number|string} postId - Post ID.
+     * @param {number[]} categories - New category IDs.
+     * @returns {Promise<void>}
+     */
     async #replaceCategories(postId, categories) {
         if (!categories || categories.length === 0) {
             return;
