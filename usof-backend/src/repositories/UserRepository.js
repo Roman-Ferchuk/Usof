@@ -23,6 +23,26 @@ class UserRepository {
             role: row.role
         });
     }
+    
+    /**
+     * Creates a new user record.
+     * @param {Object} userData
+     * @returns {Promise<number>} ID of newly created user.
+     */
+    async create({ login, passwordHash, fullName, email, role = 'user' }) {
+        try {
+            const [result] = await this.pool.query(
+                `INSERT INTO usof_database.users (login, password_hash, full_name, email, role)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [login, passwordHash, fullName, email, role]
+            );
+
+            return result.insertId;
+        } catch (error) {
+            console.error('[UserRepository.create] Error creating user: ', error.message);
+            throw error;
+        }
+    }
 
     /**
      * Gets all registered users from database.
@@ -95,26 +115,6 @@ class UserRepository {
             return this.#mapToEntity(rows[0]);
         } catch (error) {
             console.error('[UserRepository.getByLoginOrEmail] Error fetching user: ', error.message);
-            throw error;
-        }
-    }
-
-    /**
-     * Creates a new user record.
-     * @param {Object} userData
-     * @returns {Promise<number>} ID of newly created user.
-     */
-    async create({ login, passwordHash, fullName, email, role = 'user' }) {
-        try {
-            const [result] = await this.pool.query(
-                `INSERT INTO usof_database.users (login, password_hash, full_name, email, role)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [login, passwordHash, fullName, email, role]
-            );
-
-            return result.insertId;
-        } catch (error) {
-            console.error('[UserRepository.create] Error creating user: ', error.message);
             throw error;
         }
     }

@@ -1,4 +1,9 @@
 class CommentService {
+    /**
+     * Creates an instance of CommentService.
+     * @param {Object} commentRepository - Repository for managing comment entity persistence.
+     * @param {Object} postRepository - Repository for retrieving and managing post entities.
+     */
     constructor(
         commentRepository,
         postRepository
@@ -9,6 +14,15 @@ class CommentService {
         //this.likeRepository = likeRepository;
     }
 
+    /**
+     * Creates a new comment under a specific post.
+     * @param {Object} params - Parameters for creating a comment.
+     * @param {number|string} params.postId - The ID of the post to comment on.
+     * @param {number|string} params.authorId - The ID of the user creating the comment.
+     * @param {string} params.content - Content of the comment.
+     * @returns {Promise<Object>} The newly created comment object.
+     * @throws {Error} If post is missing, inactive, locked, or if validations fail.
+     */
     async createComment({
         postId,
         authorId,
@@ -41,6 +55,15 @@ class CommentService {
         return this.getCommentById(commentId);
     }
 
+    /**
+     * Retrieves a single comment by ID while applying access control rules.
+     * @param {number|string} commentId - The ID of the comment to retrieve.
+     * @param {Object} [options] - Context options for access control.
+     * @param {number|string|null} [options.userId=null] - The ID of the requesting user.
+     * @param {string|null} [options.role=null] - The role of the requesting user (e.g., 'admin').
+     * @returns {Promise<Object>} The comment entity instance.
+     * @throws {Error} If comment does not exist or if the user lacks permission to view it.
+     */
     async getCommentById(
         commentId,
         {
@@ -72,6 +95,15 @@ class CommentService {
         throw new Error('Comment is inactive');
     }
 
+    /**
+     * Retrieves all visible comments for a specified post based on user role and ownership.
+     * @param {number|string} postId - The ID of the post whose comments are being fetched.
+     * @param {Object} [options] - Context options for access control.
+     * @param {number|string|null} [options.userId=null] - The ID of the requesting user.
+     * @param {string|null} [options.role=null] - The role of the requesting user (e.g., 'admin').
+     * @returns {Promise<Array<Object>>} List of visible comments.
+     * @throws {Error} If the post is not found.
+     */
     async getCommentsByPostId(
         postId,
         {
@@ -105,6 +137,14 @@ class CommentService {
         });
     }
 
+    /**
+     * Updates the status of a comment (e.g., 'active' or 'inactive').
+     * @param {Object} params - Parameters for updating status.
+     * @param {number|string} params.commentId - The ID of the comment to update.
+     * @param {string} params.status - The target status ('active' or 'inactive').
+     * @returns {Promise<Object>} The updated comment entity instance.
+     * @throws {Error} If comment is not found or update operation fails.
+     */
     async updateCommentStatus({
         commentId,
         status
@@ -125,6 +165,15 @@ class CommentService {
         return this.commentRepository.getById(commentId);
     }
 
+    /**
+     * Toggles the lock status on a comment (Admin only).
+     * @param {Object} params - Parameters for updating lock state.
+     * @param {number|string} params.commentId - The ID of the comment.
+     * @param {boolean} params.locked - Lock status boolean.
+     * @param {string} params.userRole - The role of the executing user.
+     * @returns {Promise<Object>} The updated comment entity instance.
+     * @throws {Error} If non-admin attempts lock, or comment is missing/fails to update.
+     */
     async updateCommentLock({
         commentId,
         locked,
@@ -153,6 +202,15 @@ class CommentService {
         return this.commentRepository.getById(commentId);
     }
 
+    /**
+     * Deletes a comment by ID if the requester is the owner or an admin.
+     * @param {Object} params - Parameters for deletion.
+     * @param {number|string} params.commentId - The ID of the comment to delete.
+     * @param {number|string} params.userId - The ID of the requesting user.
+     * @param {string} params.userRole - The role of the requesting user.
+     * @returns {Promise<boolean>} Resolves to true on successful deletion.
+     * @throws {Error} If user lacks permissions or deletion fails.
+     */
     async deleteComment({
         commentId,
         userId,
@@ -182,6 +240,13 @@ class CommentService {
         return true;
     }
 
+    /**
+     * Checks if a specific user has permissions to modify a given comment.
+     * @param {Object|null} comment - The comment object to check permissions for.
+     * @param {number|string} userId - The ID of the user requesting modification.
+     * @param {string} userRole - The role of the requesting user.
+     * @returns {boolean} True if authorized, otherwise false.
+     */
     canModifyComment(comment, userId, userRole) {
         if (!comment) {
             return false;
@@ -194,6 +259,11 @@ class CommentService {
         return Number(userId) === Number(comment.authorId);
     }
 
+    /**
+     * Validates that an entity identifier is a positive integer.
+     * @param {any} id - Value to validate as an ID.
+     * @throws {Error} If value is invalid or non-positive.
+     */
     #validateId(id) { 
         if (id === undefined 
             || id === null 
@@ -204,6 +274,11 @@ class CommentService {
         } 
     }
 
+    /**
+     * Validates that content string is non-empty.
+     * @param {any} content - Value to validate.
+     * @throws {Error} If content is not a non-empty string.
+     */
     #validateContent(content) {
         if (typeof content !== 'string'
             || content.trim().length < 1
@@ -212,6 +287,11 @@ class CommentService {
         }
     }
 
+    /**
+     * Validates that comment status matches allowed enumerated values.
+     * @param {string} status - Status string to validate.
+     * @throws {Error} If status is not 'active' or 'inactive'.
+     */
     #validateStatus(status) {
         if (!['active', 'inactive'].includes(status)) {
             throw new Error('Comment status must be active or inactive');
