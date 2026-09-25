@@ -112,7 +112,7 @@ class UserService {
      * @param {Object} params - Update context parameters.
      * @param {number|string} params.userId - Target user ID to update.
      * @param {Object} params.data - Attributes to update (login, email, fullName, profilePicture).
-     * @param {number|string} params.curentUserId - ID of the user performing the update.
+     * @param {number|string} params.currentUserId - ID of the user performing the update.
      * @param {string} params.currentUserRole - Role of the user performing the update.
      * @returns {Promise<User>} Updated user entity.
      * @throws {Error} If permissions are invalid, validation fails, or update operation fails.
@@ -120,14 +120,14 @@ class UserService {
     async updateProfile({
         userId,
         data,
-        curentUserId,
+        currentUserId,
         currentUserRole
     }) {
         this.#validateId(userId);
-        this.#validateId(curentUserId);
+        this.#validateId(currentUserId);
         this.#validateRole(currentUserRole);
 
-        const isOwner = Number(userId) === Number(curentUserId); 
+        const isOwner = Number(userId) === Number(currentUserId); 
         const isAdmin = currentUserRole === 'admin';
 
         if (!isOwner && !isAdmin) {
@@ -279,7 +279,7 @@ class UserService {
      * @param {Object} params - Avatar upload options.
      * @param {number|string} params.userId - Target user ID.
      * @param {string} params.avatarPath - System or public path to uploaded image.
-     * @param {number|string} params.curentUserId - ID of user making request.
+     * @param {number|string} params.currentUserId - ID of user making request.
      * @param {string} params.currentUserRole - Role of user making request.
      * @returns {Promise<User>} Updated user entity.
      * @throws {Error} If permissions are invalid or update fails.
@@ -287,14 +287,14 @@ class UserService {
     async updateAvatar({
         userId,
         avatarPath,
-        curentUserId,
+        currentUserId,
         currentUserRole
     }) {
         this.#validateId(userId);
-        this.#validateId(curentUserId);
+        this.#validateId(currentUserId);
         this.#validateRole(currentUserRole);
 
-        const isOwner = Number(userId) === Number(curentUserId); 
+        const isOwner = Number(userId) === Number(currentUserId); 
         const isAdmin = currentUserRole === 'admin';
 
         if (!isOwner && !isAdmin) {
@@ -317,11 +317,24 @@ class UserService {
     /**
      * Permanently removes a user record by ID.
      * @param {number|string} userId - User ID to delete.
+     * @param {number|string} params.currentUserId - ID of user making request.
+     * @param {string} params.currentUserRole - Role of user making request.
      * @returns {Promise<boolean>} True if record was deleted.
      * @throws {Error} If user is not found.
      */
-    async deleteUser(userId) {
+    async deleteUser({
+        userId,
+        currentUserId,
+        currentUserRole
+    }) {
         this.#validateId(userId);
+
+        const isOwner = Number(userId) === Number(currentUserId); 
+        const isAdmin = currentUserRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
+            throw new Error('Forbidden');
+        }
 
         const user = await this.userRepository.getById(userId);
 

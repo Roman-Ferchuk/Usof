@@ -9,6 +9,8 @@ function createApp({
 }) {
     const app = express();
 
+    app.use('/api/users', userRoutes);
+
     //app.use(express.json());
 
     // app.use('/api/users', userController.router);
