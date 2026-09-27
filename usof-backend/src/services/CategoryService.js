@@ -51,7 +51,7 @@ class CategoryService {
 
         const category = await this.categoryRepository.getById(categoryId);
         if (!category) {
-            throw new Error(`Category with ID ${categoryId} not found`);
+            throw new Error(`Category not found`);
         }
         return category;
     }
