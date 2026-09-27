@@ -137,11 +137,13 @@ class UserController {
     async updateAvatar(req, res) {
         try {
             const user_id = req.user.id;
-            const avatarPath = req.file ? req.file.path : req.body.avatarPath;
+            if (!req.file) {
+                return res.status(400).json({ message: 'Avatar is required' });
+            }
 
             const updatedUser = await this.userService.updateAvatar({
                 userId: user_id,
-                avatarPath,
+                avatarPath: req.file.path,
                 currentUserId: req.user.id,
                 currentUserRole: req.user.role
             });

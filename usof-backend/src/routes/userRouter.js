@@ -3,6 +3,8 @@ const express = require('express');
 const authenticate = require('../middleware/authMiddleware');
 const requireRole = require('../middleware/roleMiddware');
 
+const upload = require('../middlewares/uploadMiddleware');
+
 /**
  * Initializes Express router for user management endpoints.
  * @param {Object} userController - Instance of UserController handling user endpoints.
@@ -54,6 +56,7 @@ function createUserRouter(userController) {
     router.patch(
         '/avatar',
         authenticate,
+        upload.single('avatar'),
         (req, res) => userController.updateAvatar(req, res)
     );
 

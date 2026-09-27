@@ -186,6 +186,25 @@ class LikeService {
     }
 
     /**
+     * Deletes a user's reaction from a post.
+     * @param {number|string} postId - The ID of the target post.
+     * @param {number|string} userId - The ID of the user whose reaction should be deleted.
+     * @returns {Promise<boolean>} True if reaction was deleted.
+     * @throws {Error} If reaction is not found.
+     */
+    async deletePostLike(postId, userId) {
+        this.#validateId(postId);
+        this.#validateId(userId);
+
+        const existingLike = await this.likeRepository.getByUserAndPost(userId, postId);
+        if (!existingLike) {
+            throw new Error('Like not found');
+        }
+
+        return this.likeRepository.delete(existingLike.id);
+    }
+
+    /**
      * Validates that an entity identifier is a positive integer.
      * @param {any} id - Value to validate as an ID.
      * @throws {Error} If value is invalid or non-positive.

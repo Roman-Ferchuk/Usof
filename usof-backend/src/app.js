@@ -9,6 +9,9 @@ function createApp({
 }) {
     const app = express();
 
+    app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+    
+
     app.use('/api/users', userRoutes);
 
     //app.use(express.json());

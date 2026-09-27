@@ -376,7 +376,7 @@ class UserService {
     }) {
         this.#validateLogin(login); 
         this.#validateEmail(email); 
-        this.#validateFullName(fullName);
+        //this.#validateFullName(fullName);
 
         if (!password 
             || typeof password !== 'string'
