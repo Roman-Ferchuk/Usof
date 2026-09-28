@@ -6,9 +6,9 @@ class LikeService {
      * @param {Object} likeRepository - Repository for managing reactions/likes.
      */
     constructor(
+        likeRepository,
         postRepository,
-        commentRepository,
-        likeRepository
+        commentRepository
     ) {
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;

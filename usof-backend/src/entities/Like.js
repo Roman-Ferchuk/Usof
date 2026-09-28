@@ -17,7 +17,7 @@ class Like {
         type,
         publishDate = new Date()
     }) {
-        super(id);
+        this.id = id;
 
         this.authorId = authorId;
         this.targetType = targetType;

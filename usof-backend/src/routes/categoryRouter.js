@@ -1,7 +1,7 @@
 const express = require('express');
 
-const authenticate = require('../middleware/authMiddleware');
-const requireRole = require('../middleware/roleMiddware');
+const authenticate = require('../middlewares/authMiddleware');
+const requireRole = require('../middlewares/roleMiddleware');
 
 /**
  * Creates and configures category express router.

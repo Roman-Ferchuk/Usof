@@ -1,26 +1,26 @@
 const express = require('express');
 
 function createApp({
-    userController,
-    postController,
-    categoryController,
-    commentController,
-    likeController
+    authRouter,
+    userRouter,
+    postRouter,
+    commentRouter,
+    categoryRouter
 }) {
     const app = express();
 
-    app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-    
+    app.use(express.json());
 
-    app.use('/api/users', userRoutes);
+    app.use('/api/auth', authRouter);
+    app.use('/api/users', userRouter);
+    app.use('/api/posts', postRouter);
+    app.use('/api/categories', categoryRouter);
+    app.use('/api/comments', commentRouter);
 
-    //app.use(express.json());
-
-    // app.use('/api/users', userController.router);
-    // app.use('/api/posts', postController.router);
-    // app.use('/api/categories', categoryController.router);
-    // app.use('/api/comments', commentController.router);
-    // app.use('/api/likes', likeController.router);
+    app.use((err, req, res, next) => {
+        console.error(err.stack);
+        res.status(500).json({ error: 'Internal Server Error' });
+    });
 
     return app;
 }

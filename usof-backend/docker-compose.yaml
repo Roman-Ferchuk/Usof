@@ -4,7 +4,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: usof-database
+      MYSQL_DATABASE: usof_database
       MYSQL_USER: admin
       MYSQL_PASSWORD: admin
     ports:

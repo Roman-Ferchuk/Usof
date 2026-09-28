@@ -1,6 +1,4 @@
-const BaseEntity = require('./BaseEntity');
-
-class PostImage extends BaseEntity {
+class PostImage {
     constructor({
         id = null,
         postId,
@@ -8,7 +6,7 @@ class PostImage extends BaseEntity {
         position,
         createdAt = new Date()
     }) {
-        super(id);
+        this.id = id;
 
         this.postId = postId;
         this.imagePath = imagePath;

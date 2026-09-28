@@ -1,7 +1,7 @@
 const express = require('express');
-const authenticate = require('../middleware/authMiddleware');
+const authenticate = require('../middlewares/authMiddleware');
 const optionalAuthenticate = require('../middlewares/optionalAuthenticateMiddleware');
-const upload = require('../middleware/uploadMiddleware'); 
+const upload = require('../middlewares/uploadMiddleware'); 
 
 /**
  * Creates and configures post express router.

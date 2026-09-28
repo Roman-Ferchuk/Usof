@@ -92,3 +92,5 @@ class PostImageRepository {
         }
     }
 }
+
+module.exports = PostImageRepository;

@@ -1,11 +1,9 @@
-const BaseEntity = require('./BaseEntity');
-
 const UserRole = Object.freeze({
     USER: 'user',
     ADMIN: 'admin'
 });
 
-class User extends BaseEntity {
+class User{
     constructor({
         id = null,
         login,
@@ -17,7 +15,7 @@ class User extends BaseEntity {
         rating = 0,
         role = UserRole.USER
     }) {
-        super(id);
+        this.id = id;
 
         this.login = login;
         this.passwordHash = passwordHash;

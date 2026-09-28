@@ -23,7 +23,7 @@ class PostController {
      * Gets paginated posts with filters.
      * @route GET /api/posts
      */
-    async getAllPosts(req, res) {
+    async getPosts(req, res) {
         try {
             const { page, limit, sort, categoryIds, dateFrom, dateTo, status } = req.query;
             const parsedCategories = categoryIds 
@@ -279,3 +279,5 @@ class PostController {
         }
     }
 }
+
+module.exports = PostController;

@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { authenticate } = require('../middleware/authMiddleware');
+const authenticate = require('../middlewares/authMiddleware');
 
 /**
  * Initializes Express router for authentication endpoints.

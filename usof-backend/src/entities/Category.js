@@ -1,12 +1,10 @@
-const BaseEntity = require('./BaseEntity');
-
-class Category extends BaseEntity {
+class Category {
     constructor({
         id = null, 
         title, 
         description = null
     }) {
-        super(id);
+        this.id = id;
         this.title = title;
         this.description = description;
 

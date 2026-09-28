@@ -1,11 +1,9 @@
-const BaseEntity = require('./BaseEntity');
-
 const PostStatus = Object.freeze({
     ACTIVE: 'active',
     INACTIVE: 'inactive'
 })
 
-class Post extends BaseEntity {
+class Post {
     constructor({
         id = null,
         authorId,
@@ -17,7 +15,7 @@ class Post extends BaseEntity {
         categories = [],
         images = []
     }) {
-        super(id);
+        this.id = id;
 
         this.authorId = authorId;
         this.title = title;

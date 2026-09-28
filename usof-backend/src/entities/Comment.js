@@ -1,6 +1,4 @@
-const BaseEntity = require('./BaseEntity');
-
-class Comment extends BaseEntity {
+class Comment {
     constructor({
         id = null,
         postId,
@@ -10,7 +8,7 @@ class Comment extends BaseEntity {
         locked,
         content
     }) {
-        super(id);
+        this.id = id;
 
         this.postId = postId;
         this.authorId = authorId;

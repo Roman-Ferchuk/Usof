@@ -9,11 +9,11 @@ class PostService {
      * @param {Object} repositories.categoryRepository - Repository for category data access.
      * @param {Object} repositories.postImageRepository - Repository for post image handling.
      */
-    constructor({ 
+    constructor(
         postRepository, 
         categoryRepository, 
         postImageRepository 
-    }) { 
+    ) { 
         this.postRepository = postRepository; 
         this.categoryRepository = categoryRepository; 
         this.postImageRepository = postImageRepository; 
