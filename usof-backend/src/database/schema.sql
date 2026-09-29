@@ -101,3 +101,14 @@ CREATE TABLE IF NOT EXISTS usof_database.likes (
     UNIQUE KEY unique_user_post_like (author_id, post_id),
     UNIQUE KEY unique_user_comment_like (author_id, comment_id)
 );
+
+-- 8. Таблиця улюблених постів
+CREATE TABLE IF NOT EXISTS usof_database.favorites (
+    user_id INT NOT NULL,
+    post_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (user_id, post_id),
+    FOREIGN KEY (user_id) REFERENCES usof_database.users(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES usof_database.posts(id) ON DELETE CASCADE
+);

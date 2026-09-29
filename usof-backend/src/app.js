@@ -16,6 +16,7 @@ function createApp({
     app.use('/api/posts', postRouter);
     app.use('/api/categories', categoryRouter);
     app.use('/api/comments', commentRouter);
+    app.use('/uploads', express.static('uploads'));
 
     app.use((err, req, res, next) => {
         console.error(err.stack);

@@ -224,7 +224,7 @@ class CommentService {
             throw new Error('Comment not found');
         }
 
-        const isOwner = comment.authorId === userId;
+        const isOwner = Number(comment.authorId) === Number(userId);
         const isAdmin = userRole === 'admin';
 
         if (!isOwner && !isAdmin) {

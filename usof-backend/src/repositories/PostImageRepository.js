@@ -32,13 +32,13 @@ class PostImageRepository {
         }
     }
 
-    async createMany( {postId, imagePaths }) {
+    async createMany({ postId, imagePaths }) {
         if (!imagePaths || imagePaths.length === 0) return;
 
         try {
-            await imagePaths.forEach(imagePath => {
-                this.create(postId, imagePath)
-            });
+            for (const imagePath of imagePaths) {
+                await this.create({ postId, imagePath });
+            }
         } catch (error) {
             console.error('[PostImageRepository.createMany] Error creating images: ', error.message);
             throw error;

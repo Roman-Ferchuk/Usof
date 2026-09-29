@@ -102,6 +102,7 @@ class PostService {
 
         const offset = (Number(page) - 1) * Number(limit);
 
+        // 1. Отримуємо список постів з БД за фільтрами
         const posts = await this.postRepository.getAllWithFilters({
             limit: Number(limit),
             offset,
@@ -114,10 +115,20 @@ class PostService {
             role
         });
 
+        const postsWithCategories = await Promise.all(
+            posts.map(async (post) => {
+                const categories = await this.postRepository.getCategories(post.id);
+                return {
+                    ...post,
+                    categories
+                };
+            })
+        );
+
         return {
             page: Number(page),
             limit: Number(limit),
-            data: posts
+            data: postsWithCategories
         };
     }
 
@@ -145,18 +156,25 @@ class PostService {
             throw new Error('Post not found');
         }
 
-        if (post.status === 'active') {
-            return post;
+        if (post.status !== 'active') {
+            const isOwner = userId !== null && Number(post.authorId) === Number(userId);
+            const isAdmin = role === 'admin';
+
+            if (!isOwner && !isAdmin) { 
+                throw new Error('Post is inactive');
+            }
         }
 
-        const isOwner = userId !== null && Number(post.authorId) === Number(userId);
-        const isAdmin = role === 'admin';
+        const [categories, images] = await Promise.all([
+            this.postRepository.getCategories(postId),
+            this.postImageRepository.getImagesInPost(postId)
+        ]);
 
-        if (!isOwner && !isAdmin) { 
-            throw new Error('Post is inactive');
-        }
-
-        return post;
+        return {
+            ...post,
+            categories,
+            images
+        };
     }
 
     /**
