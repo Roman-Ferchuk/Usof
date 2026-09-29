@@ -3,6 +3,7 @@ class Comment {
         id = null,
         postId,
         authorId,
+        parentId = null,
         publishDate = new Date(),
         status,
         locked,
@@ -11,6 +12,7 @@ class Comment {
         this.id = id;
 
         this.postId = postId;
+        this.parentId = parentId;
         this.authorId = authorId;
         this.publishDate = publishDate;
         this.status = status;

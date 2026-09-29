@@ -118,6 +118,35 @@ class CommentController {
     }
 
     /**
+     * Creates a reply to a comment.
+     * @route POST /api/comments/:comment_id/reply
+     */
+    async replyToComment(req, res) {
+        try {
+            const { comment_id } = req.params;
+            const parent = await this.commentService.getCommentById(comment_id, {
+                userId: req.user.id,
+                role: req.user.role
+            });
+
+            const reply = await this.commentService.createComment({
+                postId: parent.postId,
+                parentId: comment_id,
+                authorId: req.user.id,
+                content: req.body.content
+            });
+
+            return res.status(201).json(reply);
+        } catch (error) {
+            let statusCode = 400;
+            if (error.message.includes('not found')) statusCode = 404;
+            if (error.message === 'Comment is inactive' || error.message.includes('locked')) statusCode = 403;
+
+            return res.status(statusCode).json({ error: error.message });
+        }
+    }
+
+    /**
      * Deletes a comment.
      * @route DELETE /api/comments/:comment_id
      */

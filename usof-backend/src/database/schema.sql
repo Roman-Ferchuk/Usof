@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS usof_database.comments (
     id INT NOT NULL AUTO_INCREMENT,
     post_id INT NOT NULL,
     author_id INT NOT NULL,
+    parent_id INT DEFAULT NULL,
     publish_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     locked BOOLEAN NOT NULL DEFAULT FALSE,
@@ -75,6 +76,11 @@ CREATE TABLE IF NOT EXISTS usof_database.comments (
 
     FOREIGN KEY (author_id)
         REFERENCES usof_database.users(id)
+        ON DELETE CASCADE
+
+    CONSTRAINT fk_comments_parent
+        FOREIGN KEY (parent_id)
+        REFERENCES usof_database.comments(id)
         ON DELETE CASCADE
 );
 

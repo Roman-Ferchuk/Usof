@@ -94,16 +94,20 @@ class PostController {
     async createNewComment(req, res) {
         try {
             const { post_id } = req.params;
-            
+
             const comment = await this.commentService.createComment({
                 postId: post_id,
-                authroId: req.user.id,
-                content: req.body.content
+                authorId: req.user.id,
+                content: req.body.content,
+                role: req.user.role
             });
 
             return res.status(201).json(comment);
         } catch (error) {
-            const statusCode = error.message === 'Post not found' ? 404 : 400;
+            let statusCode = 400;
+            if (error.message === 'Post not found') statusCode = 404;
+            if (error.message === 'Post is locked') statusCode = 403;
+
             return res.status(statusCode).json({ error: error.message });
         }
     }
@@ -214,11 +218,11 @@ class PostController {
      */
     async updatePostLock(req, res) {
         try {
-            const { postId } = req.params;
+            const { post_id } = req.params;
             const { locked } = req.body;
 
             const updatedPost = await this.postService.updatePostLock(
-                postId,
+                post_id,
                 locked,
                 req.user.role
             );
@@ -260,10 +264,10 @@ class PostController {
      */
     async deletePostLike(req, res) {
         try {
-            const { postId } = req.params;
+            const { post_id } = req.params;
             const userId = req.user.id;
 
-            const result = await this.likeService.deletePostLike(postId, userId);
+            const result = await this.likeService.deletePostLike(post_id, userId);
 
             return res.status(200).json({ 
                 message: 'Like successfully removed',

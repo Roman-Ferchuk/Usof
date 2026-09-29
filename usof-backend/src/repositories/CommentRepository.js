@@ -11,6 +11,7 @@ class CommentRepository {
             id: row.id,
             postId: row.post_id,
             authorId: row.author_id,
+            authorId: row.author_id,
             publishDate: row.publish_date,
             status: row.status,
             locked: Boolean(row.locked),
@@ -18,12 +19,12 @@ class CommentRepository {
         });
     }
 
-    async create({ postId, authorId, publishDate = new Date(), content }) {
+    async create({ postId, authorId, parentId = null, publishDate = new Date(), content }) {
         try {
             const [result] = await this.pool.query(
-                `INSERT INTO usof_database.comments (post_id, author_id, publish_date, content)
-                 VALUES (?, ?, ?, ?)`,
-                 [postId, authorId, publishDate, content]
+                `INSERT INTO usof_database.comments (post_id, author_id, parent_id, publish_date, content)
+                 VALUES (?, ?, ?, ?, ?)`,
+                 [postId, authorId, parentId, publishDate, content]
             );
 
             return result.insertId;
@@ -36,7 +37,7 @@ class CommentRepository {
     async getById(id) {
         try {
             const [result] = await this.pool.query(
-                `SELECT id, post_id, author_id, publish_date, status, locked, content
+                `SELECT id, post_id, author_id, parent_id, publish_date, status, locked, content
                  FROM usof_database.comments
                  WHERE id = ?`,
                  [id]
@@ -52,7 +53,7 @@ class CommentRepository {
     async getAllCommentsUnderPostById(id) {
         try {
             const [rows] = await this.pool.query(
-                `SELECT id, post_id, author_id, publish_date, status, locked, content
+                `SELECT id, post_id, author_id, parent_id, publish_date, status, locked, content
                  FROM usof_database.comments
                  WHERE post_id = ?`,
                  [id]
@@ -64,10 +65,6 @@ class CommentRepository {
             throw error;
         }
     }
-
-    // async getAllLikesUnderComment(id) {
-    //     // Not sure that this should be here, maybe like repo
-    // }
 
     async updateCommentStatus(id, status) {
         if (!['active', 'inactive'].includes(status)) {

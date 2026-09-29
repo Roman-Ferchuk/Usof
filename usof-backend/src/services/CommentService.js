@@ -26,6 +26,7 @@ class CommentService {
     async createComment({
         postId,
         authorId,
+        parentId = null,
         content
     }) {
         this.#validateId(postId);
@@ -46,13 +47,25 @@ class CommentService {
             throw new Error('Post is locked');
         }
 
+        if (parentId !== null && parentId !== undefined) {
+            this.#validateId(parentId);
+            const parent = await this.commentRepository.getById(parentId);
+            if (!parent) throw new Error('Parent comment not found');
+            if (Number(parent.postId) !== Number(postId)) throw new Error('Parent comment belongs to another post');
+            if (parent.status !== 'active') throw new Error('Cannot reply to inactive comment');
+            if (parent.locked) throw new Error('Comment is locked');
+        } else {
+            parentId = null;
+        }
+
         const commentId = await this.commentRepository.create({
             postId,
             authorId,
+            parentId,
             content: content.trim()
         });
 
-        return this.getCommentById(commentId);
+        return this.getCommentById(commentId, { userId: authorId });
     }
 
     /**

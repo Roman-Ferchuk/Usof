@@ -44,6 +44,17 @@ function createCommentRouter(commentController) {
     );
 
     /**
+     * @route POST /api/comments/:comment_id/reply
+     * @desc Create a reply under a comment
+     * @access Private
+     */
+    router.post(
+        '/:comment_id/reply',
+        authenticate,
+        (req, res) => commentController.replyToComment(req, res)
+    );
+
+    /**
      * @route PATCH /api/comments/:comment_id
      * @desc Update specified comment data (change status to active/inactive)
      * @access Private
