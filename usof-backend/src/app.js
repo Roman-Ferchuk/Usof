@@ -5,12 +5,14 @@ function createApp({
     userRouter,
     postRouter,
     commentRouter,
-    categoryRouter
+    categoryRouter,
+    favoriteRouter
 }) {
     const app = express();
 
     app.use(express.json());
 
+    app.use('/api', favoriteRouter);
     app.use('/api/auth', authRouter);
     app.use('/api/users', userRouter);
     app.use('/api/posts', postRouter);

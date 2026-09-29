@@ -7,6 +7,7 @@ const PostImageRepository = require('./src/repositories/PostImageRepository');
 const LikeRepository = require('./src/repositories/LikeRepository');
 const CommentRepository = require('./src/repositories/CommentRepository');
 const CategoryRepository = require('./src/repositories/CategoryRepository');
+const FavoriteRepository = require('./src/repositories/FavoriteRepository');
 
 // Services
 const AuthService = require('./src/services/AuthService');
@@ -16,6 +17,7 @@ const EmailService = require('./src/services/EmailService');
 const LikeService = require('./src/services/LikeService');
 const CommentService = require('./src/services/CommentService');
 const CategoryService = require('./src/services/CategoryService');
+const FavoriteService = require('./src/services/FavoriteService');
 
 // Controllers
 const AuthController = require('./src/controllers/AuthController');
@@ -23,6 +25,7 @@ const UserController = require('./src/controllers/UserController');
 const PostController = require('./src/controllers/PostController');
 const CommentController = require('./src/controllers/CommentControler');
 const CategoryController = require('./src/controllers/CategoriesContoller');
+const FavoriteController = require('./src/controllers/FavoriteController');
 
 // Routers
 const createAuthRouter = require('./src/routes/authRouter');
@@ -30,6 +33,7 @@ const createUserRouter = require('./src/routes/userRouter');
 const createPostRouter = require('./src/routes/postRouter');
 const createCommentRouter = require('./src/routes/commentRouter');
 const createCategoryRouter = require('./src/routes/categoryRouter');
+const createFavoriteRouter = require('./src/routes/favoriteRouter');
 
 const createApp = require('./src/app');
 const initDb = require('./src/config/initDB');
@@ -46,6 +50,7 @@ async function startServer() {
         const likeRepository = new LikeRepository(pool);
         const commentRepository = new CommentRepository(pool);
         const categoryRepository = new CategoryRepository(pool);
+        const favoriteRepository = new FavoriteRepository(pool);
 
         const emailService = new EmailService();
         const authService = new AuthService(userRepository, emailService);
@@ -54,25 +59,29 @@ async function startServer() {
         const likeService = new LikeService(likeRepository, postRepository, commentRepository);
         const commentService = new CommentService(commentRepository, postRepository);
         const categoryService = new CategoryService(categoryRepository);
+        const favoriteService = new FavoriteService(favoriteRepository, postRepository);
 
         const authController = new AuthController(authService);
         const userController = new UserController(userService);
         const postController = new PostController(postService, likeService, commentService);
         const commentController = new CommentController(commentService, likeService);
         const categoryController = new CategoryController(categoryService, postService);
+        const favoriteController = new FavoriteController(favoriteService);
 
         const authRouter = createAuthRouter(authController);
         const userRouter = createUserRouter(userController);
         const postRouter = createPostRouter(postController);
         const commentRouter = createCommentRouter(commentController);
         const categoryRouter = createCategoryRouter(categoryController);
+        const favoriteRouter = createFavoriteRouter(favoriteController);
 
         const app = createApp({
             authRouter,
             userRouter,
             postRouter,
             commentRouter,
-            categoryRouter
+            categoryRouter,
+            favoriteRouter
         });
 
         const PORT = process.env.PORT || 3000;
