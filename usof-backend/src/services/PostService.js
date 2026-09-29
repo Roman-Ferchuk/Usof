@@ -12,11 +12,15 @@ class PostService {
     constructor(
         postRepository, 
         categoryRepository, 
-        postImageRepository 
+        postImageRepository,
+        notificationService,
+        subscriptionRepository
     ) { 
         this.postRepository = postRepository; 
         this.categoryRepository = categoryRepository; 
-        this.postImageRepository = postImageRepository; 
+        this.postImageRepository = postImageRepository;
+        this.notificationService = notificationService;
+        this.subscriptionRepository = subscriptionRepository; 
     }
 
     /**
@@ -245,11 +249,14 @@ class PostService {
             throw new Error('Forbidden');
         }
 
+        const changedFields = [];
+
         if (data.title !== undefined) {
             this.#validateTitle(data.title);
 
             if (data.title.trim() !== post.title) {
                 post.title = data.title.trim();
+                changedFields.push('title');
             }
         }
 
@@ -262,6 +269,7 @@ class PostService {
 
             if (data.content.trim() !== post.content) {
                 post.content = data.content.trim();
+                changedFields.push('content');
             }
         }
 
@@ -286,7 +294,13 @@ class PostService {
             await this.#replaceCategories(postId, data.categories);
         }
 
-        return this.postRepository.getById(postId);
+        const updatedPost = await this.postRepository.getById(postId);
+
+        this.notificationService
+            .notifyPostUpdated({ post: updatedPost, changedFields, authorId: Number(userId) })
+            .catch(console.error);
+
+        return updatedPost;
     }
 
     /**

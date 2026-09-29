@@ -5,6 +5,12 @@ class FavoriteRepository {
         this.pool = pool;
     }
 
+    /**
+     * Adds a post to a user's favorites.
+     * @param {number|string} userId - ID of the user.
+     * @param {number|string} postId - ID of the post.
+     * @returns {Promise<boolean>} True if added to favorites, false if already present.
+     */
     async add(userId, postId) {
         try {
             const [result] = await this.pool.query(
@@ -19,6 +25,12 @@ class FavoriteRepository {
         }
     }
 
+    /**
+     * Removes a post from a user's favorites.
+     * @param {number|string} userId - ID of the user.
+     * @param {number|string} postId - ID of the post.
+     * @returns {Promise<boolean>} True if removed, false if it was not in favorites.
+     */
     async remove(userId, postId) {
         try {
             const [result] = await this.pool.query(
@@ -33,6 +45,12 @@ class FavoriteRepository {
         }
     }
 
+    /**
+     * Checks if a post is in a user's favorites.
+     * @param {number|string} userId - ID of the user.
+     * @param {number|string} postId - ID of the post.
+     * @returns {Promise<boolean>} True if the post is favorited, false otherwise.
+     */
     async isFavorite(userId, postId) {
         try {
             const [rows] = await this.pool.query(
@@ -47,6 +65,18 @@ class FavoriteRepository {
         }
     }
 
+    /**
+     * Retrieves favorite posts for a user with applied search, filter, and sort options.
+     * @param {number|string} userId - ID of the user.
+     * @param {Object} [options={}] - Query filtering and pagination parameters.
+     * @param {number} [options.limit=10] - Number of items to return.
+     * @param {number} [options.offset=0] - Offset for pagination.
+     * @param {string} [options.sort='date'] - Sorting strategy ('date', 'likes', 'added').
+     * @param {Array<number|string>|null} [options.categoryIds=null] - Array of category IDs to filter by.
+     * @param {string|Date|null} [options.dateFrom=null] - Start date filter.
+     * @param {string|Date|null} [options.dateTo=null] - End date filter.
+     * @returns {Promise<Array<Post>>} Array of Post entities.
+     */
     async getByUserIdWithFilters(
         userId, 
         {
@@ -127,6 +157,13 @@ class FavoriteRepository {
         }
     }
 
+    /**
+     * Retrieves favorite posts for a user with basic pagination.
+     * @param {number|string} userId - ID of the user.
+     * @param {number} [limit=10] - Number of records to fetch.
+     * @param {number} [offset=0] - Number of records to skip.
+     * @returns {Promise<Array<Post>>} Array of Post entities.
+     */
     async getByUserId(userId, limit = 10, offset = 0) {
         try {
             const [rows] = await this.pool.query(

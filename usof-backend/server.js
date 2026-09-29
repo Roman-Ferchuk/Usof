@@ -8,6 +8,7 @@ const LikeRepository = require('./src/repositories/LikeRepository');
 const CommentRepository = require('./src/repositories/CommentRepository');
 const CategoryRepository = require('./src/repositories/CategoryRepository');
 const FavoriteRepository = require('./src/repositories/FavoriteRepository');
+const SubscriptionRepository = require('./src/repositories/SubscriptionRepository');
 
 // Services
 const AuthService = require('./src/services/AuthService');
@@ -18,6 +19,8 @@ const LikeService = require('./src/services/LikeService');
 const CommentService = require('./src/services/CommentService');
 const CategoryService = require('./src/services/CategoryService');
 const FavoriteService = require('./src/services/FavoriteService');
+const SubscriptionService = require('./src/services/SubscriptionService');
+const NotificationService = require('./src/services/NotificationService');
 
 // Controllers
 const AuthController = require('./src/controllers/AuthController');
@@ -51,19 +54,22 @@ async function startServer() {
         const commentRepository = new CommentRepository(pool);
         const categoryRepository = new CategoryRepository(pool);
         const favoriteRepository = new FavoriteRepository(pool);
+        const subscriptionRepository = new SubscriptionRepository(pool);
 
         const emailService = new EmailService();
         const authService = new AuthService(userRepository, emailService);
         const userService = new UserService(userRepository);
-        const postService = new PostService(postRepository,categoryRepository, postImageRepository);
+        const notificationService = new NotificationService(subscriptionRepository, emailService);
+        const postService = new PostService(postRepository,categoryRepository, postImageRepository, notificationService, subscriptionRepository);
         const likeService = new LikeService(likeRepository, postRepository, commentRepository);
+        const subscriptionService = new SubscriptionService(subscriptionRepository, postService);
         const commentService = new CommentService(commentRepository, postRepository);
         const categoryService = new CategoryService(categoryRepository);
         const favoriteService = new FavoriteService(favoriteRepository, postRepository);
 
         const authController = new AuthController(authService);
         const userController = new UserController(userService);
-        const postController = new PostController(postService, likeService, commentService);
+        const postController = new PostController(postService, likeService, commentService, subscriptionService);
         const commentController = new CommentController(commentService, likeService);
         const categoryController = new CategoryController(categoryService, postService);
         const favoriteController = new FavoriteController(favoriteService);

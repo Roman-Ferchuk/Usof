@@ -6,12 +6,12 @@ class CommentService {
      */
     constructor(
         commentRepository,
-        postRepository
-        //likeRepository
+        postRepository,
+        notificationService
     ) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
-        //this.likeRepository = likeRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -65,7 +65,16 @@ class CommentService {
             content: content.trim()
         });
 
-        return this.getCommentById(commentId, { userId: authorId });
+        const createdComment = await this.commentRepository.getById(commentId);
+
+        this.notificationService.notifyNewComment({
+            post,
+            comment: createdComment,
+            authorId: Number(authorId),
+            authorName: author.full_name
+        });
+
+        return createdComment;
     }
 
     /**

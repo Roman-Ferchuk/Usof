@@ -1,27 +1,31 @@
 /**
- * Controller class handling HTTP requests related to posts, comments, and reactions.
+ * Controller class handling HTTP requests related to posts, comments, reactions, and subscriptions.
  */
 class PostController {
     /**
      * Creates an instance of PostController.
-     * @param {Object} services - Injection object containing service instances.
-     * @param {Object} services.postService - Instance of PostService.
-     * @param {Object} services.commentService - Instance of CommentService.
-     * @param {Object} services.likeService - Instance of LikeService.
+     * @param {Object} postService - Instance of PostService.
+     * @param {Object} likeService - Instance of LikeService.
+     * @param {Object} commentService - Instance of CommentService.
+     * @param {Object} subscriptionService - Instance of SubscriptionService.
      */
     constructor(
         postService,
         likeService,
-        commentService
+        commentService,
+        subscriptionService
     ) {
         this.postService = postService;
         this.likeService = likeService;
         this.commentService = commentService;
+        this.subscriptionService = subscriptionService;
     }
 
     /**
      * Gets paginated posts with filters.
      * @route GET /api/posts
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async getPosts(req, res) {
         try {
@@ -50,7 +54,9 @@ class PostController {
 
     /**
      * Gets a single post by ID.
-     * @route GET /api/posts/:postId
+     * @route GET /api/posts/:post_id
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async getPostById(req, res) {
         try {
@@ -69,7 +75,9 @@ class PostController {
 
     /**
      * Gets all comments for a post.
-     * @route GET /api/posts/:postId/comments
+     * @route GET /api/posts/:post_id/comments
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async getPostComments(req, res) {
         try {
@@ -89,7 +97,9 @@ class PostController {
 
     /**
      * Creates a new comment under a post.
-     * @route POST /api/posts/:postId/comments
+     * @route POST /api/posts/:post_id/comments
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async createNewComment(req, res) {
         try {
@@ -114,7 +124,9 @@ class PostController {
 
     /**
      * Gets categories associated with a post.
-     * @route GET /api/posts/:postId/categories
+     * @route GET /api/posts/:post_id/categories
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async getPostCategories(req, res) {
         try {
@@ -130,7 +142,9 @@ class PostController {
 
     /**
      * Gets reactions/likes on a post.
-     * @route GET /api/posts/:postId/like
+     * @route GET /api/posts/:post_id/like
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async getPostLikes(req, res) {
         try {
@@ -147,6 +161,8 @@ class PostController {
     /**
      * Creates a new post.
      * @route POST /api/posts
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async createPost(req, res) {
         try {
@@ -171,7 +187,9 @@ class PostController {
 
     /**
      * Toggles reaction (like/dislike) on a post.
-     * @route POST /api/posts/:postId/like
+     * @route POST /api/posts/:post_id/like
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async togglePostLike(req, res) {
         try {
@@ -192,7 +210,9 @@ class PostController {
 
     /**
      * Updates an existing post.
-     * @route PATCH /api/posts/:postId
+     * @route PATCH /api/posts/:post_id
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async updatePost(req, res) {
         try {
@@ -214,7 +234,9 @@ class PostController {
 
     /**
      * Updates post lock status (Admin only).
-     * @route PATCH /api/posts/:postId/lock
+     * @route PATCH /api/posts/:post_id/lock
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async updatePostLock(req, res) {
         try {
@@ -239,7 +261,9 @@ class PostController {
 
     /**
      * Deletes a post.
-     * @route DELETE /api/posts/:postId
+     * @route DELETE /api/posts/:post_id
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async deletePost(req, res) {
         try {
@@ -260,7 +284,9 @@ class PostController {
 
     /**
      * Deletes a like/reaction from a post.
-     * @route DELETE /api/posts/:postId/like
+     * @route DELETE /api/posts/:post_id/like
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
      */
     async deletePostLike(req, res) {
         try {
@@ -280,6 +306,60 @@ class PostController {
             }
 
             return res.status(statusCode).json({ error: error.message });
+        }
+    }
+
+    /**
+     * Subscribes the authenticated user to post updates.
+     * @route POST /api/posts/:post_id/subscribe
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
+     */
+    async subscribeToPost(req, res) {
+        try {
+            const { post_id } = req.params;
+            const result = await this.subscriptionService.subscribe(post_id, {
+                userId: req.user.id,
+                role: req.user.role
+            });
+            return res.status(201).json(result);
+        } catch (error) {
+            const statusCode = error.message === 'Post not found' ? 404
+                : error.message === 'Post is inactive' ? 403 : 400;
+            return res.status(statusCode).json({ error: error.message });
+        }
+    }
+
+    /**
+     * Unsubscribes the authenticated user from post updates.
+     * @route DELETE /api/posts/:post_id/subscribe
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
+     */
+    async unsubscribeFromPost(req, res) {
+        try {
+            const { post_id } = req.params;
+            const result = await this.subscriptionService.unsubscribe(post_id, req.user.id);
+            return res.status(200).json(result);
+        } catch (error) {
+            const statusCode = error.message === 'Subscription not found' ? 404 : 400;
+            return res.status(statusCode).json({ error: error.message });
+        }
+    }
+
+    /**
+     * Gets the current user's subscription status for a post.
+     * @route GET /api/posts/:post_id/subscribe
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
+     */
+    async getSubscriptionStatus(req, res) {
+        try {
+            const { post_id } = req.params;
+            const result = await this.subscriptionService.getStatus(post_id, req.user.id);
+            return res.status(200).json(result);
+        } catch (error) {
+            return res.status(400).json({ error: error.message });
         }
     }
 }

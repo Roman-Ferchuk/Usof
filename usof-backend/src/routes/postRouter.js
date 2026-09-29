@@ -52,7 +52,7 @@ function createPostRouter(postController) {
     router.post(
         '/:post_id/comments',
         authenticate,
-        (req, res) => postController.createComment(req, res)
+        (req, res) => postController.createNewComment(req, res)
     );
 
     /**
@@ -140,6 +140,39 @@ function createPostRouter(postController) {
         '/:post_id/like',
         authenticate,
         (req, res) => postController.deletePostLike(req, res)
+    );
+
+    /**
+     * @route POST /api/posts/:post_id/subscribe
+     * @desc Subscribe authenticated user to post updates
+     * @access Private
+     */
+    router.post(
+        '/:post_id/subscribe',
+        authenticate,
+        (req, res) => postController.subscribeToPost(req, res)
+    );
+
+    /**
+     * @route DELETE /api/posts/:post_id/subscribe
+     * @desc Unsubscribe authenticated user from post updates
+     * @access Private
+     */
+    router.delete(
+        '/:post_id/subscribe',
+        authenticate,
+        (req, res) => postController.unsubscribeFromPost(req, res)
+    );
+
+    /**
+     * @route GET /api/posts/:post_id/subscribe
+     * @desc Get subscription status for a post
+     * @access Private
+     */
+    router.get(
+        '/:post_id/subscribe',
+        authenticate,
+        (req, res) => postController.getSubscriptionStatus(req, res)
     );
 
     return router;
