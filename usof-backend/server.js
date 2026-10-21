@@ -40,10 +40,12 @@ const createFavoriteRouter = require('./src/routes/favoriteRouter');
 
 const createApp = require('./src/app');
 const initDb = require('./src/config/initDB');
+const initSeed = require('./src/config/initSeed');
 
 async function startServer() {
     try {
         await initDb(pool);
+        await initSeed(pool);
         await pool.query('SELECT 1');
         console.log('Database connected successfully');
 
@@ -60,7 +62,7 @@ async function startServer() {
         const authService = new AuthService(userRepository, emailService);
         const userService = new UserService(userRepository);
         const notificationService = new NotificationService(subscriptionRepository, emailService);
-        const postService = new PostService(postRepository,categoryRepository, postImageRepository, notificationService, subscriptionRepository);
+        const postService = new PostService(postRepository, categoryRepository, postImageRepository, notificationService, subscriptionRepository);
         const likeService = new LikeService(likeRepository, postRepository, commentRepository);
         const subscriptionService = new SubscriptionService(subscriptionRepository, postService);
         const commentService = new CommentService(commentRepository, postRepository);

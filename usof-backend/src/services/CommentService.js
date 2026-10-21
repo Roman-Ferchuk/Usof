@@ -71,7 +71,7 @@ class CommentService {
             post,
             comment: createdComment,
             authorId: Number(authorId),
-            authorName: author.full_name
+            authorName: req.user.full_name
         });
 
         return createdComment;

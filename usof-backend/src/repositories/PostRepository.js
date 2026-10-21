@@ -1,5 +1,5 @@
 const { Post } = require('../entities/Post');
-const { Category }= require('../entities/Category')
+const Category = require('../entities/Category')
 
 class PostRepository {
     constructor(pool) {
@@ -331,10 +331,10 @@ class PostRepository {
     async getCategories(postId) {
         const [rows] = await this.pool.query(
             `SELECT c.id, c.title, c.description
-             FROM categories c
-             INNER JOIN post_categories pc
-                 ON pc.category_id = c.id
-             WHERE pc.post_id = ?`, 
+            FROM usof_database.categories c
+            INNER JOIN usof_database.post_categories pc
+                ON pc.category_id = c.id
+            WHERE pc.post_id = ?`, 
             [postId]
         );
 

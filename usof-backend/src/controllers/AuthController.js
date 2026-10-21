@@ -64,7 +64,7 @@ class AuthController {
             const authResult = await this.authService.login({
                 login: req.body.login,
                 email: req.body.email,
-                password: password
+                password: req.body.password
             });
 
             return res.status(200).json(authResult);

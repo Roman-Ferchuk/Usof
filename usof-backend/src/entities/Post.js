@@ -11,7 +11,7 @@ class Post {
         publishDate = new Date(),
         content,
         status = PostStatus.ACTIVE,
-        locked = falslse,
+        locked = false,
         categories = [],
         images = []
     }) {

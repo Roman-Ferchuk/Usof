@@ -18,8 +18,8 @@ class CategoryService {
             throw new Error('Category title is required');
         }
 
-        const normilizedTitle = title.trim(); 
-        const existingCategory = await this.categoryRepository.findByTitle(normilizedTitle);
+        const normalizedTitle = title.trim(); 
+        const existingCategory = await this.categoryRepository.findByTitle(normalizedTitle);
 
         if (existingCategory) {
             throw new Error(`Category ${title} already exists`);
@@ -67,7 +67,7 @@ class CategoryService {
     async updateCategory(categoryId, { title, description }) {
         this.#validateId(categoryId);
 
-        const category = this.categoryRepository.getById(categoryId);
+        const category = await this.categoryRepository.getById(categoryId);
 
         if (!category) {
             throw new Error('Category not found');
@@ -101,7 +101,7 @@ class CategoryService {
      * @returns {Promise<boolean>} True if deleted successfully.
      */
     async deleteCategory(categoryId) {
-        this.#validateId(categoryId)
+        this.#validateId(categoryId);
 
         const category = await this.categoryRepository.getById(categoryId);
         if (!category) {

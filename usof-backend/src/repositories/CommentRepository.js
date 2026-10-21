@@ -5,13 +5,13 @@ class CommentRepository {
         this.pool = pool;
     }
 
-    #mapTOEntity(row) {
+    #mapToEntity(row) {
         if (!row) return null;
         return new Comment({
             id: row.id,
             postId: row.post_id,
             authorId: row.author_id,
-            authorId: row.author_id,
+            parentId: row.parent_id,
             publishDate: row.publish_date,
             status: row.status,
             locked: Boolean(row.locked),
@@ -43,7 +43,7 @@ class CommentRepository {
                  [id]
             );
 
-            return this.#mapTOEntity(result[0]);
+            return this.#mapToEntity(result[0]);
         } catch (error) {
             console.error('[CommentRepository.getById] Error getting comment by id: ', error.message);
             throw error;
@@ -59,7 +59,7 @@ class CommentRepository {
                  [id]
             );
 
-            return rows.map(row => this.#mapTOEntity(row));
+            return rows.map(row => this.#mapToEntity(row));
         } catch (error) {
             console.error('[CommentRepository.getById] Error getting comment under post by id: ', error.message);
             throw error;

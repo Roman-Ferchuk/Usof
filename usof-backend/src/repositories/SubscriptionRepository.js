@@ -60,11 +60,11 @@ class SubscriptionRepository {
     async getSubscribers(postId, excludeUserId = null) {
         const [rows] = await this.pool.query(
             `SELECT u.id, u.email, u.full_name
-             FROM post_subscriptions s
-             JOIN users u ON u.id = s.user_id
-             WHERE s.post_id = ?
-               AND u.email_confirmed = TRUE
-               AND u.id <> ?`,
+            FROM usof_database.post_subscriptions s
+            JOIN usof_database.users u ON u.id = s.user_id
+            WHERE s.post_id = ?
+            AND u.email_confirmed = TRUE
+            AND u.id <> ?`,
             [postId, excludeUserId ?? 0]
         );
         return rows;

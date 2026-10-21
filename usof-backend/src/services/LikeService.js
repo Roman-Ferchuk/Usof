@@ -102,7 +102,7 @@ class LikeService {
             throw new Error('Comment is locked. Forbidden');
         }
 
-        const existingLike = await this.likeRepository.getByUserAndComment(authorId, comment);
+        const existingLike = await this.likeRepository.getByUserAndComment(authorId, commentId);
 
         if (existingLike) {
             if (existingLike.type === type) {

@@ -73,10 +73,10 @@ class PostImageRepository {
     async getImagesInPost(postId) {
         try {
             const [rows] = await this.pool.query(
-                `SELECT id, post_id, image_path, created_at
-                 FROM usof_database.post_images
-                 WHERE post_id = ?
-                 ORDER BY created_at ASC`,
+                `SELECT id, post_id, image_path, position, created_at
+                FROM usof_database.post_images
+                WHERE post_id = ?
+                ORDER BY position ASC, created_at ASC`,
                 [postId]
             );
 

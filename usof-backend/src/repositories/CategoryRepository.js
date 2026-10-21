@@ -1,4 +1,4 @@
-const { Category } = require('../entities/Category');
+const Category = require('../entities/Category');
 
 class CategoryRepository {
     constructor(pool) {
