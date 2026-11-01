@@ -131,7 +131,26 @@ export const api = {
     files.forEach((f) => form.append('images', f));
     return request('/posts', { method: 'POST', form });
   },
+  addPostImages: (id, files) => {
+    const form = new FormData();
+    files.forEach((f) => form.append('images', f));
+    return request(`/posts/${id}/images`, { method: 'POST', form });
+  },
+  deletePostImage: (id, imageId) => request(`/posts/${id}/images/${imageId}`, { method: 'DELETE' }),
   updatePost: (id, body) => request(`/posts/${id}`, { method: 'PATCH', body }),
+  /*
+   * Admin moderation hides a post AND locks it, so the author cannot simply show it again
+   * (authors may hide/show their own posts, but not a locked one).
+   */
+  moderatePost: async (id, hidden) => {
+    if (hidden) {
+      await request(`/posts/${id}`, { method: 'PATCH', body: { status: 'inactive' } });
+      await request(`/posts/${id}/lock`, { method: 'PATCH', body: { locked: true } });
+    } else {
+      await request(`/posts/${id}/lock`, { method: 'PATCH', body: { locked: false } });
+      await request(`/posts/${id}`, { method: 'PATCH', body: { status: 'active' } });
+    }
+  },
   lockPost: (id, locked) => request(`/posts/${id}/lock`, { method: 'PATCH', body: { locked } }),
   deletePost: (id) => request(`/posts/${id}`, { method: 'DELETE' }),
   subscription: (id) => request(`/posts/${id}/subscribe`),

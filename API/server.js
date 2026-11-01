@@ -1,3 +1,6 @@
+// Relative paths (.env, uploads/) must not depend on the directory the server was started from.
+process.chdir(__dirname);
+
 require('dotenv').config();
 
 const pool = require('./src/config/db').promise();

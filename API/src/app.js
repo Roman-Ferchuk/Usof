@@ -17,6 +17,12 @@ function createApp({
     app.disable('x-powered-by');
     app.use(securityHeaders);
     app.use(express.json({ limit: '100kb' }));
+    // plain `curl -d "login=a&password=b"` sends application/x-www-form-urlencoded
+    app.use(express.urlencoded({ extended: false, limit: '100kb' }));
+    app.use((req, res, next) => {
+        if (req.body === undefined) req.body = {};
+        next();
+    });
     app.use((req, res, next) => {
         if (req.body === undefined) req.body = {};
         next();

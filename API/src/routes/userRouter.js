@@ -73,6 +73,13 @@ function createUserRouter(userController) {
         (req, res) => userController.updateProfile(req, res)
     );
 
+    // PUT is accepted as an alias of PATCH (some clients and curl examples use it)
+    router.put(
+        '/:user_id',
+        authenticate,
+        (req, res) => userController.updateProfile(req, res)
+    );
+
     /**
      * @route PATCH /api/users/:user_id/role
      * @desc Change the system role of a specified user.

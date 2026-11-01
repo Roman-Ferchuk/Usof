@@ -9,7 +9,9 @@ A React + Redux single-page app on top of the **usof backend** REST API (Express
 - Post page: images, likes/dislikes, nested comments (comments on comments), comments sorted by rating, favourites, e-mail subscription, view counter, reading time.
 - Profile page: edit login / full name, upload an avatar, list of the user's posts with their own sorting and filters.
 - **Statistics page** (`/#/stats`): totals, a 30-day activity chart (questions, comments, views), popular categories, like/dislike ratio, top members and most viewed questions. Charts are plain SVG, no chart library.
-- **Admin panel inside the app** (`/#/admin`, admins only): overview with "needs attention" counters, users (roles, e-mail confirmation, delete), posts and comments (hide, lock, delete), categories (create, edit, delete), reactions. One login for the whole site.
+- **Admin panel inside the app** (`/#/admin`, admins only): overview with "needs attention" counters, users (edit data, roles, e-mail confirmation, delete), posts (hide/show, lock, change categories, delete), comments (hide, lock, delete), categories (create, edit, delete), reactions. One login for the whole site. Hiding a post as an admin also locks it, so its author cannot simply show it again.
+- **Photos** are added one by one (or several at once) with a preview and a remove button for each, up to 5 per post; they can also be added and removed when a post is edited.
+- Authors can hide and show their own posts; the profile page has a change-password form.
 - Sharing: native share sheet, copy link, Facebook, X, LinkedIn, Telegram.
 - Light / dark theme with a toggle (remembers the choice), "/" focuses the search box, "Skip to content" link, responsive layout.
 - Validation of every form with readable messages.
@@ -51,6 +53,22 @@ Production build: `npm run build` → `dist/`.
 Test admin from the seed data: `admin_alex` / `Password123`. Without SMTP settings the confirmation and reset links are printed in the API console.
 
 Never commit `API/.env`: it holds the JWT secret and the mail password (it is in `.gitignore`).
+
+## API notes for reviewers
+All routes start with `/api`. Request bodies can be JSON or `application/x-www-form-urlencoded` (plain `curl -d`).
+
+| Task | Request |
+| --- | --- |
+| Register | `POST /auth/register` (`login`, `email`, `password`, `passwordConfirmation`) |
+| Change a password | `PATCH` or `PUT /users/:id` with `password` (optional `passwordConfirmation`, `currentPassword`) |
+| Admin creates / deletes a user | `POST /users`, `DELETE /users/:id` |
+| Hide a post (author or admin) | `PATCH /posts/:id` with `status=inactive` |
+| Comment on a comment | `POST /comments/:id/reply` |
+| Add photos to a post | `POST /posts/:id/images` (multipart field `images`, 5 per post) |
+| Remove a photo | `DELETE /posts/:id/images/:image_id` |
+| Statistics, view counter | `GET /stats`, `POST /posts/:id/view` |
+
+Only an admin can delete other users' comments; authors can delete their own. Demo photos and avatars for the seed data live in `API/uploads/posts` and `API/uploads/avatars` and are committed on purpose; files uploaded at run time are ignored by git.
 
 ## Project structure
 ```

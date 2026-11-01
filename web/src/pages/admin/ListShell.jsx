@@ -3,7 +3,7 @@ import { plural } from '../../utils';
 
 /* Common frame of an admin list: summary line, errors, empty state, table and pager. */
 export default function ListShell({
-  list, noun, filters, children,
+  list, noun, filters, before, children,
 }) {
   const {
     status, error, total, rows, page, pages, setPage,
@@ -11,6 +11,7 @@ export default function ListShell({
   return (
     <section>
       {filters}
+      {before}
       <p className="muted feed__summary" aria-live="polite">
         {status === 'loading' ? 'Loading…' : plural(total, noun)}
       </p>

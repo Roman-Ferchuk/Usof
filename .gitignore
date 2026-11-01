@@ -3,5 +3,9 @@ dist/
 .env
 .DS_Store
 *.log
-API/uploads/
 API/node_modules/
+
+# files uploaded by users while the app runs (the demo images in uploads/posts and uploads/avatars/<seed>.png stay in git)
+API/uploads/images/*
+API/uploads/avatars/avatar-*
+API/uploads/misc/

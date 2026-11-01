@@ -118,6 +118,51 @@ class PostImageRepository {
     }
 
     /**
+     * @param {number|string} id - Image ID.
+     * @returns {Promise<PostImage|null>} The image or null.
+     */
+    async getById(id) {
+        try {
+            const [rows] = await this.pool.query(
+                `SELECT id, post_id, image_path, position, created_at
+                FROM usof_database.post_images
+                WHERE id = ?`,
+                [id]
+            );
+
+            return this.#mapToEntity(rows[0]);
+        } catch (error) {
+            console.error('[PostImageRepository.getById] Error getting image: ', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Appends images after the ones the post already has.
+     * @param {Object} data
+     * @param {number|string} data.postId - ID of the post.
+     * @param {Array<string>} data.imagePaths - Paths of the new files.
+     * @returns {Promise<void>}
+     */
+    async addMany({ postId, imagePaths }) {
+        try {
+            const [[{ last }]] = await this.pool.query(
+                `SELECT COALESCE(MAX(position), 0) AS last
+                FROM usof_database.post_images
+                WHERE post_id = ?`,
+                [postId]
+            );
+
+            for (let i = 0; i < imagePaths.length; i++) {
+                await this.create({ postId, imagePath: imagePaths[i], position: Number(last) + i + 1 });
+            }
+        } catch (error) {
+            console.error('[PostImageRepository.addMany] Error adding images: ', error.message);
+            throw error;
+        }
+    }
+
+    /**
      * Deletes a post image record by its ID.
      * @param {number|string} id - ID of the image record to delete.
      * @returns {Promise<boolean>} True if deleted successfully, false otherwise.

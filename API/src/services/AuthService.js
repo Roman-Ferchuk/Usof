@@ -186,7 +186,12 @@ class AuthService {
             { expiresIn: RESET_TOKEN_EXPIRES_IN }
         );
 
-        await this.emailService.sendPasswordResetEmail(user.email, resetToken, user.fullName);
+        try {
+            await this.emailService.sendPasswordResetEmail(user.email, resetToken, user.fullName);
+        } catch (error) {
+            // The answer stays the same, so it does not reveal whether the e-mail is registered or the mail server is down.
+            console.error('[AuthService.requestPasswordReset] Failed to send reset email:', error.message);
+        }
 
         return { message: 'If this email is registered, you will receive a password reset link.' };
     }

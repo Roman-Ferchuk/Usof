@@ -1,7 +1,10 @@
 /**
  * Service handling business logic for posts, their categories, images, and permissions.
  */
+const { removeFiles } = require('../utils/files');
+
 const MAX_PAGE_SIZE = 100;
+const MAX_IMAGES_PER_POST = 5;
 
 class PostService {
     /**
@@ -287,8 +290,9 @@ class PostService {
         }
 
         if (data.status !== undefined) {
-            if (!isAdmin) {
-                throw new Error('Only admin can change post status');
+            // Authors may hide and show their own posts; a locked post (moderated by an admin) stays as it is.
+            if (!isAdmin && post.locked) {
+                throw new Error('Post is locked by an admin');
             }
 
             this.#validateStatus(data.status);
@@ -299,12 +303,15 @@ class PostService {
             }
         }
 
-        await this.postRepository.save(post);
-
+        // validate before anything is written
         if (data.categories !== undefined) {
             this.#validateCategories(data.categories);
             await this.#validateCategoriesExist(data.categories);
+        }
 
+        await this.postRepository.save(post);
+
+        if (data.categories !== undefined) {
             await this.#replaceCategories(postId, data.categories);
             changedFields.push('categories');
         }
@@ -315,7 +322,12 @@ class PostService {
             .notifyPostUpdated({ post: updatedPost, changedFields, authorId: Number(userId) })
             .catch(console.error);
 
-        return updatedPost;
+        const [categories, images] = await Promise.all([
+            this.postRepository.getCategories(postId),
+            this.postImageRepository.getImagesInPost(postId)
+        ]);
+
+        return { ...updatedPost, categories, images };
     }
 
     /**
@@ -405,6 +417,8 @@ class PostService {
             throw new Error('Forbidden');
         }
 
+        const images = await this.postImageRepository.getImagesInPost(postId);
+
         await this.postImageRepository.deleteByPostId(postId);
         const deleted = await this.postRepository.deletePost(postId);
 
@@ -412,6 +426,75 @@ class PostService {
             throw new Error('Failed to delete post');
         }
 
+        await removeFiles(images.map((image) => image.imagePath));
+
+        return true;
+    }
+
+    /**
+     * Adds images to an existing post. Only the author can do it (images are part of the content).
+     * @param {Object} params
+     * @param {number|string} params.postId - Post ID.
+     * @param {number|string} params.userId - ID of the user who sends the files.
+     * @param {string[]} params.imagePaths - Paths of the uploaded files.
+     * @returns {Promise<PostImage[]>} All images of the post.
+     * @throws {Error} 'Post not found', 'Forbidden' or a validation message.
+     */
+    async addImages({ postId, userId, imagePaths }) {
+        this.#validateId(postId);
+        this.#validateId(userId);
+
+        const post = await this.postRepository.getById(postId);
+        if (!post) {
+            throw new Error('Post not found');
+        }
+        if (Number(userId) !== Number(post.authorId)) {
+            throw new Error('Forbidden');
+        }
+        if (!imagePaths.length) {
+            throw new Error('No images were uploaded');
+        }
+
+        const current = await this.postImageRepository.getImagesInPost(postId);
+        if (current.length + imagePaths.length > MAX_IMAGES_PER_POST) {
+            throw new Error(`A post can have at most ${MAX_IMAGES_PER_POST} images`);
+        }
+
+        await this.postImageRepository.addMany({ postId, imagePaths });
+        return this.postImageRepository.getImagesInPost(postId);
+    }
+
+    /**
+     * Removes one image from a post. Allowed for the author and for admins.
+     * @param {Object} params
+     * @param {number|string} params.postId - Post ID.
+     * @param {number|string} params.imageId - Image ID.
+     * @param {number|string} params.userId - ID of the current user.
+     * @param {string} params.userRole - Role of the current user.
+     * @returns {Promise<boolean>} True when removed.
+     * @throws {Error} 'Post not found', 'Image not found' or 'Forbidden'.
+     */
+    async deleteImage({ postId, imageId, userId, userRole }) {
+        this.#validateId(postId);
+        this.#validateId(imageId);
+
+        const post = await this.postRepository.getById(postId);
+        if (!post) {
+            throw new Error('Post not found');
+        }
+
+        const isOwner = Number(userId) === Number(post.authorId);
+        if (!isOwner && userRole !== 'admin') {
+            throw new Error('Forbidden');
+        }
+
+        const image = await this.postImageRepository.getById(imageId);
+        if (!image || Number(image.postId) !== Number(postId)) {
+            throw new Error('Image not found');
+        }
+
+        await this.postImageRepository.delete(imageId);
+        await removeFiles([image.imagePath]);
         return true;
     }
 

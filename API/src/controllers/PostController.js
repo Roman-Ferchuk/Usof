@@ -1,3 +1,15 @@
+const { removeFiles, uploadedPaths } = require('../utils/files');
+
+/**
+ * @param {Error} error - Error thrown by a service.
+ * @returns {number} HTTP status matching the message.
+ */
+const statusOf = (error) => {
+    if (error.message === 'Forbidden') return 403;
+    if (/not found/i.test(error.message)) return 404;
+    return 400;
+};
+
 /**
  * Controller class handling HTTP requests related to posts, comments, reactions, and subscriptions.
  */
@@ -172,7 +184,7 @@ class PostController {
         try {
             const categories = req.body.categories ? 
                 (Array.isArray(req.body.categories) ? req.body.categories : [req.body.categories]) : [];
-            const images = req.files ? req.files.map(file => file.path.replace(/\\/g, '/')) : [];
+            const images = uploadedPaths(req.files);
 
             const post = await this.postService.createPost({
                 authorId: req.user.id,
@@ -184,8 +196,51 @@ class PostController {
 
             return res.status(201).json(post);
         } catch (error) {
+            await removeFiles(uploadedPaths(req.files));
             const statusCode = error.message === 'Post not found' ? 404 : 400;
             return res.status(statusCode).json({ error: error.message });
+        }
+    }
+
+    /**
+     * Adds images to an existing post (author only).
+     * @route POST /api/posts/:post_id/images
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
+     */
+    async addImages(req, res) {
+        try {
+            const images = await this.postService.addImages({
+                postId: req.params.post_id,
+                userId: req.user.id,
+                imagePaths: uploadedPaths(req.files)
+            });
+
+            return res.status(201).json(images);
+        } catch (error) {
+            await removeFiles(uploadedPaths(req.files));
+            return res.status(statusOf(error)).json({ error: error.message });
+        }
+    }
+
+    /**
+     * Removes one image of a post (author or admin).
+     * @route DELETE /api/posts/:post_id/images/:image_id
+     * @param {Object} req - Express request object.
+     * @param {Object} res - Express response object.
+     */
+    async deleteImage(req, res) {
+        try {
+            await this.postService.deleteImage({
+                postId: req.params.post_id,
+                imageId: req.params.image_id,
+                userId: req.user.id,
+                userRole: req.user.role
+            });
+
+            return res.status(204).end();
+        } catch (error) {
+            return res.status(statusOf(error)).json({ error: error.message });
         }
     }
 
@@ -232,7 +287,8 @@ class PostController {
             return res.status(200).json(post);
         } catch (error) {
             const statusCode = error.message === 'Post not found' ? 404
-                : (error.message === 'Forbidden' || error.message.startsWith('Only admin') || error.message.startsWith('Admin cannot')) ? 403 : 400;
+                : (error.message === 'Forbidden' || error.message.startsWith('Only admin') || error.message.startsWith('Admin cannot')
+                    || error.message.includes('locked by an admin')) ? 403 : 400;
             return res.status(statusCode).json({ error: error.message });
         }
     }

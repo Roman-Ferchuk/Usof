@@ -66,8 +66,9 @@ export default function PostPage({ id }) {
   const toggleStatus = async () => {
     try {
       const next = inactive ? 'active' : 'inactive';
-      await api.updatePost(post.id, { status: next });
-      setPost({ ...post, status: next });
+      if (isAdmin && !isOwner) await api.moderatePost(post.id, next === 'inactive');
+      else await api.updatePost(post.id, { status: next });
+      setPost({ ...post, status: next, locked: isAdmin && !isOwner ? next === 'inactive' : post.locked });
       dispatch(toast(next === 'inactive' ? 'Post hidden from other users' : 'Post is visible again', 'ok'));
     } catch (e) { dispatch(toast(e.message)); }
   };
@@ -114,7 +115,11 @@ export default function PostPage({ id }) {
         <FavoriteButton postId={post.id} initial={post.isFavorite} />
         <SubscribeButton postId={post.id} />
         {isOwner && <Link className="btn btn--ghost" to={`/posts/${post.id}/edit`}>Edit</Link>}
-        {isAdmin && <button type="button" className="btn btn--ghost" onClick={toggleStatus}>{inactive ? 'Make active' : 'Make inactive'}</button>}
+        {(isAdmin || (isOwner && !post.locked)) && (
+          <button type="button" className="btn btn--ghost" onClick={toggleStatus}>
+            {inactive ? 'Make active' : 'Make inactive'}
+          </button>
+        )}
         <LockButton kind="posts" id={post.id} locked={post.locked} />
         {(isOwner || isAdmin) && <button type="button" className="btn btn--ghost btn--danger" onClick={remove}>Delete</button>}
         <ShareMenu url={url} title={post.title} />

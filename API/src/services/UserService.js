@@ -161,8 +161,12 @@ class UserService {
             user.fullName = data.fullName.trim();
         }
 
-        if (data.profilePicture !== undefined) {
-            user.profilePicture = data.profilePicture;
+        // The avatar is changed only through PATCH /api/users/avatar (checked file upload), never by a text field.
+
+        // Checked before anything is saved, so a wrong password does not leave a half-updated profile.
+        const wantsNewPassword = data.password !== undefined;
+        if (wantsNewPassword) {
+            await this.#assertPasswordChange(user, data);
         }
 
         const saved = await this.userRepository.save(user); 
@@ -170,8 +174,43 @@ class UserService {
         if (!saved) { 
             throw new Error('Failed to update user'); 
         } 
+
+        // Saved last: save() above writes the whole row, including the old password hash.
+        if (wantsNewPassword) {
+            await this.changePassword({
+                userId: user.id,
+                newPassword: data.password,
+                newPasswordConfirmation: data.passwordConfirmation ?? data.password
+            });
+        }
         
         return this.getUserById(user.id);
+    }
+
+    /**
+     * Validates a password change that comes together with a profile update.
+     * The old password is checked when it is sent (the web client always sends it).
+     * @private
+     * @param {User} user - Target user entity.
+     * @param {Object} data - Request body.
+     * @throws {Error} When the new password is weak, the confirmation differs or the old one is wrong.
+     */
+    async #assertPasswordChange(user, data) {
+        if (typeof data.password !== 'string' || data.password.length < 8) {
+            throw new Error('Password must contain at least 8 characters');
+        }
+
+        if (data.passwordConfirmation !== undefined && data.passwordConfirmation !== data.password) {
+            throw new Error('Passwords do not match');
+        }
+
+        if (data.currentPassword !== undefined) {
+            const isValid = await bcrypt.compare(String(data.currentPassword), user.passwordHash);
+
+            if (!isValid) {
+                throw new Error('Invalid current password');
+            }
+        }
     }
 
     /**

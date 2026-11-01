@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { api, norm } from '../api/client';
 import { setUser } from '../store/authSlice';
 import { toast } from '../store/uiSlice';
-import { rules, validate, validateImage } from '../utils';
+import { matches, required, rules, validate, validateImage } from '../utils';
 import Avatar from '../components/Avatar';
 import Field from '../components/Field';
 import Feed from '../components/Feed';
@@ -15,6 +15,8 @@ export default function Profile({ id }) {
   const [missing, setMissing] = useState('');
   const [form, setForm] = useState({ login: '', fullName: '' });
   const [errors, setErrors] = useState({});
+  const [pw, setPw] = useState({ currentPassword: '', password: '', passwordConfirmation: '' });
+  const [pwErrors, setPwErrors] = useState({});
   const meId = me && me.id;
   const own = meId !== undefined && meId !== null && String(meId) === String(id);
 
@@ -41,6 +43,22 @@ export default function Profile({ id }) {
       dispatch(setUser({ ...me, ...data }));
       dispatch(toast('Profile saved', 'ok'));
     } catch (err) { setErrors({ form: err.message }); }
+  };
+
+  const savePassword = async (e) => {
+    e.preventDefault();
+    const errs = validate(pw, {
+      currentPassword: [required('Enter your current password')],
+      password: rules.password,
+      passwordConfirmation: [matches('password', 'Passwords do not match')],
+    });
+    setPwErrors(errs);
+    if (Object.keys(errs).length) return;
+    try {
+      await api.updateUser(id, pw);
+      setPw({ currentPassword: '', password: '', passwordConfirmation: '' });
+      dispatch(toast('Password changed. Use the new one next time you log in.', 'ok'));
+    } catch (err) { setPwErrors({ form: err.message }); }
   };
 
   const onAvatar = async (e) => {
@@ -80,6 +98,24 @@ export default function Profile({ id }) {
           {errors.form && <p className="field__error" role="alert">{errors.form}</p>}
           <button type="submit" className="btn">Save changes</button>
         </form>
+      )}
+      {own && (
+        <details className="editor">
+          <summary>Change password</summary>
+          <form onSubmit={savePassword} noValidate>
+            <Field label="Current password" error={pwErrors.currentPassword}>
+              <input type="password" autoComplete="current-password" value={pw.currentPassword} onChange={(e) => setPw({ ...pw, currentPassword: e.target.value })} />
+            </Field>
+            <Field label="New password (at least 8 characters)" error={pwErrors.password}>
+              <input type="password" autoComplete="new-password" value={pw.password} onChange={(e) => setPw({ ...pw, password: e.target.value })} />
+            </Field>
+            <Field label="Repeat new password" error={pwErrors.passwordConfirmation}>
+              <input type="password" autoComplete="new-password" value={pw.passwordConfirmation} onChange={(e) => setPw({ ...pw, passwordConfirmation: e.target.value })} />
+            </Field>
+            {pwErrors.form && <p className="field__error" role="alert">{pwErrors.form}</p>}
+            <button type="submit" className="btn">Change password</button>
+          </form>
+        </details>
       )}
       <h2 className="section-title">{own ? 'Your posts' : `Posts by ${profile.login}`}</h2>
       <Feed authorId={id} />

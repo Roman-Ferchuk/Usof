@@ -94,6 +94,19 @@ function createPostRouter(postController) {
      * @access Private
      */
     router.post(
+        '/:post_id/images',
+        authenticate,
+        upload.array('images', 5),
+        (req, res) => postController.addImages(req, res)
+    );
+
+    router.delete(
+        '/:post_id/images/:image_id',
+        authenticate,
+        (req, res) => postController.deleteImage(req, res)
+    );
+
+    router.post(
         '/:post_id/like',
         authenticate,
         (req, res) => postController.togglePostLike(req, res)
