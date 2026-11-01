@@ -38,8 +38,8 @@ cd <repository>
 
 # 1. API (port 3000)
 cd API
-cp .env.example .env      # then set JWT_SECRET (and the DB settings if they differ)
-npm install && npm start
+npm install
+npm start
 cd ..
 
 # 2. Web app (port 5173)
@@ -89,10 +89,3 @@ API/                 usof backend (+ src/admin: the old stand-alone panel, optio
 5. Likes, favourites, locks and subscriptions are sent to the API and update only the affected component.
 6. A `401` answer clears the token and sends the user to the login page.
 7. `PostPage` counts one view per browser session (`POST /api/posts/:id/view`); `Stats` reads `GET /api/stats`; `Admin` renders the tab chosen in `?tab=` and loads it through `/api/admin/*`.
-
-## Progress by CBL stage
-- **Engage** — studied the brief: the client must visualise every endpoint of the backend.
-- **Investigate** — compared SPA and multi-page apps, chose React + Redux, planned routes and slices, listed security measures (no `innerHTML`, validated forms, token cleared on 401).
-- **Act: Basic** — header with search and user info, menu, main and profile pages, sorting, filtering, pagination, nested comments, validation, responsive layout.
-- **Act: Creative** — statistics page with SVG charts and view counters, admin panel inside the app, favourites, e-mail subscription, locking, sharing buttons, footer, light/dark theme.
-- **Document / Share** — this README; LinkedIn post tagged `#InnovationCampusKhPI`.
