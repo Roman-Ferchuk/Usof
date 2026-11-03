@@ -8,7 +8,9 @@ INSERT INTO usof_database.users (id, login, password_hash, full_name, email, ema
 (2, 'code_master', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Viktoriia Shaforostova', 'viktoriia.shaforostova@example.com', TRUE, 'uploads/avatars/viktoriia.png', 15, 'user'),
 (3, 'dev_girl', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Mariia Mykhalchenko', 'mariia.mykhalchenko@example.com', TRUE, 'uploads/avatars/mariia.png', 8, 'user'),
 (4, 'backend_guy', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Vladyslav Kasatonov', 'vladyslav.kasatonov@example.com', TRUE, 'uploads/avatars/vlad.png', 2, 'user'),
-(5, 'dev', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Albina Milshyna', 'albina.milshyna@example.com', FALSE, 'uploads/avatars/albina.png', 0, 'user');
+(5, 'dev', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Albina Milshyna', 'albina.milshyna@example.com', FALSE, 'uploads/avatars/albina.png', 0, 'user'),
+(6, 'frontend_guy', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Danichka', 'danichka@example.com', TRUE, 'uploads/avatars/danichka.png', 0, 'user');
+
 -- 2. Categories
 INSERT INTO usof_database.categories (id, title, description) VALUES
 (1, 'Node.js', 'All questions related to Node.js and Express development'),
