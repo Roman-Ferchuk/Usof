@@ -112,6 +112,4 @@ docs/screenshots/      screenshots used by this README
 
 **Act: Basic.** Header with service name, search, role/login/avatar and menu on every page; main page with the latest posts, sorting, filtering and pagination; profile page with editable data and the user's own posts; post page with nested comments (comments on comments) sorted by rating; validation of every form.
 
-**Act: Creative.** Statistics page with SVG charts, light/dark theme, sharing (native, copy link, Facebook, X, LinkedIn, Telegram), favourites, e-mail subscriptions, view counter, footer, an admin panel inside the app and multi-photo upload with preview.
-
-**Document & Share.** This README, code comments and the algorithm above; the LinkedIn post is the last step.
+**Act: Creative.** Statistics page with SVG charts, light/dark theme, sharing (native, copy link, Facebook, X, LinkedIn, Telegram), favourites, e-mail subscriptions, view counter, footer, an admin panel inside the app.
