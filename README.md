@@ -1,7 +1,7 @@
 # usof — questions and answers for developers
 
 Full Stack track, challenge **usof frontend** (second part of the usof project).
-A React + Redux single-page app on top of the **usof backend** REST API (Express + MySQL, folder `API/`).
+A React + Redux single-page app (Create React App) on top of the **usof backend** REST API (Express + MySQL, folder `API/`).
 
 ## What it does
 - Registration with e-mail confirmation, log in / log out, password reset.
@@ -28,7 +28,7 @@ Add your screenshots to `docs/screenshots/` and link them here:
 | Admin panel | `docs/screenshots/admin.png` |
 
 ## Requirements
-- Node.js 20.19+ (or 22.12+) and npm
+- Node.js 18+ (20 or 22 recommended) and npm
 - MySQL 8 (for the API); `API/docker-compose.yaml` starts one with `docker compose up -d`
 
 ## How to run
@@ -44,11 +44,12 @@ cd ..
 
 # 2. Web app (port 5173)
 npm install
-npm run dev          # http://localhost:5173
+npm start            # http://localhost:5173  (`npm run dev` does the same)
 ```
 The dev server proxies `/api`, `/uploads` and `/admin` to `http://localhost:3000`
-(change it with `API_URL=http://host:port npm run dev`).
-Production build: `npm run build` → `dist/`.
+(see `src/setupProxy.js`; another address: `API_URL=http://host:port npm start`).
+The port 5173 is set in `.env.development` (the API builds e-mail links from `CLIENT_URL=http://localhost:5173`).
+Production build: `npm run build` → `build/` (static files; the app uses a hash router, so any static host works).
 
 Test admin from the seed data: `admin_alex` / `Password123`. Without SMTP settings the confirmation and reset links are printed in the API console.
 
@@ -72,17 +73,20 @@ Only an admin can delete other users' comments; authors can delete their own. De
 
 ## Project structure
 ```
-web/                 React app (index.html, src/)
-  src/api/client.js  the only file that knows the API contract
-  src/store/         Redux Toolkit slices: auth, feed, favorites, stats, ui
-  src/components/    reusable UI pieces
-  src/pages/         one component per route (pages/admin/ holds the admin tabs)
-  src/router.jsx     small hash router (no third-party router)
-API/                 usof backend (+ src/admin: the old stand-alone panel, optional)
+public/index.html      HTML template of the React app (Create React App)
+src/                   React app
+  index.js             entry point
+  setupProxy.js        dev-server proxy to the API (/api, /uploads, /admin)
+  api/client.js        the only file that knows the API contract
+  store/               Redux Toolkit slices: auth, feed, favorites, stats, ui
+  components/          reusable UI pieces
+  pages/               one component per route (pages/admin/ holds the admin tabs)
+  router.jsx           small hash router (no third-party router)
+API/                   usof backend (+ src/admin: the old stand-alone panel, optional)
 ```
 
 ## Algorithm of the program
-1. `main.jsx` mounts `<App/>` inside the Redux `Provider`.
+1. `index.js` mounts `<App/>` inside the Redux `Provider`.
 2. `App` restores the session from the JWT in `localStorage` (`restore`), loads categories and picks the page for the current `#/path`.
 3. `Feed` reads filters from the URL, calls `fetchFeed` and renders `PostCard`s with `Pagination`; changing a control changes the URL, which triggers a new request.
 4. `PostPage` loads the post and a flat list of comments; `Comments` builds a tree by `parentId` and sorts each level by rating.
