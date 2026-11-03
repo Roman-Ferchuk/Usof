@@ -17,9 +17,9 @@ A React + Redux single-page app (Create React App) on top of the **usof backend*
 - Validation of every form with readable messages.
 
 ## Screenshots
-| Main page (filters, pagination) | Post with nested comments |
-|---|---|
-| ![Main page](docs/screenshots/home.png) | ![Post](docs/screenshots/post.png) |
+| Main page (filters, pagination) | Post | Comments |
+|---|---|---|
+| ![Main page](docs/screenshots/home.png) | ![Post](docs/screenshots/post.png) | ![Comments](docs/screenshots/comments.png)
 
 | Registration | Profile | Admin panel |
 |---|---|---|
