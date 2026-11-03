@@ -5,10 +5,10 @@
 -- 1. Users (passwords for testing are hashed with bcrypt
 INSERT INTO usof_database.users (id, login, password_hash, full_name, email, email_confirmed, profile_picture, rating, role) VALUES
 (1, 'admin_alex', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Alex Johnson', 'alex.johnson@example.com', TRUE, 'uploads/avatars/admin_avatar.png', 10, 'admin'),
-(2, 'code_master', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'John Doe', 'john.doe@example.com', TRUE, 'uploads/avatars/john.png', 15, 'user'),
-(3, 'dev_girl', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Anna Smith', 'anna.smith@example.com', TRUE, 'uploads/avatars/anna.png', 8, 'user'),
-(4, 'backend_guy', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Mike Brown', 'mike.b@example.com', TRUE, 'uploads/avatars/mike.png', 2, 'user'),
-(5, 'newbie_dev', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Sarah Connor', 'sarah.c@example.com', FALSE, 'uploads/avatars/default-avatar.png', 0, 'user');
+(2, 'code_master', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Viktoriia Shaforostova', 'viktoriia.shaforostova@example.com', TRUE, 'uploads/avatars/viktoriia.png', 15, 'user'),
+(3, 'dev_girl', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Mariia Mykhalchenko', 'mariia.mykhalchenko@example.com', TRUE, 'uploads/avatars/mariia.png', 8, 'user'),
+(4, 'backend_guy', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Vladyslav Kasatonov', 'vladyslav.kasatonov@example.com', TRUE, 'uploads/avatars/vlad.png', 2, 'user'),
+(5, 'dev', '$2b$10$okV7B.bgcfW9ABzYPEf6ye5vqLaWAGm6fYUy.3f7bEvUPTihg0a6K', 'Albina Milshyna', 'albina.milshyna@example.com', FALSE, 'uploads/avatars/albina.png', 0, 'user');
 -- 2. Categories
 INSERT INTO usof_database.categories (id, title, description) VALUES
 (1, 'Node.js', 'All questions related to Node.js and Express development'),
