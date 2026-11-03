@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { navigate, useLocation } from '../router';
 import { qs } from '../api/client';
@@ -9,6 +9,31 @@ import PostCard from './PostCard';
 import Pagination from './Pagination';
 
 const DEFAULTS = { sort: 'date', order: 'desc', limit: DEFAULT_LIMIT };
+const MIN_DATE = '1970-01-01';
+const MAX_DATE = '2100-12-31';
+
+/* Date input with a local draft. While the year is typed digit by digit the browser reports
+   0002-.., 0020-.., 0202-.. ; those values must not reach the URL (and the API), and a half-typed
+   date must not be overwritten from the URL. The filter is applied only for a complete, sane date. */
+function DateFilter({ label, value, min, max, onCommit }) {
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => { setDraft(value); }, [value]);
+
+  const handleChange = (e) => {
+    const next = e.target.value;
+    setDraft(next);
+    const complete = /^\d{4}-\d{2}-\d{2}$/.test(next) && next >= MIN_DATE && next <= MAX_DATE;
+    if (next === '' || complete) onCommit(next);
+  };
+
+  return (
+    <label className="filters__item">
+      <span>{label}</span>
+      <input type="date" value={draft} min={min || MIN_DATE} max={max || MAX_DATE} onChange={handleChange} />
+    </label>
+  );
+}
 
 /* Posts list with filters, sorting and pagination. Every control lives in the URL, so links can be shared. */
 export default function Feed({ authorId }) {
@@ -72,14 +97,8 @@ export default function Feed({ authorId }) {
             <option value="asc">{query.sort === 'date' ? 'Oldest first' : 'Lowest first'}</option>
           </select>
         </label>
-        <label className="filters__item">
-          <span>From</span>
-          <input type="date" value={query.from} max={query.to || undefined} onChange={(e) => set({ from: e.target.value })} />
-        </label>
-        <label className="filters__item">
-          <span>To</span>
-          <input type="date" value={query.to} min={query.from || undefined} onChange={(e) => set({ to: e.target.value })} />
-        </label>
+        <DateFilter label="From" value={query.from} max={query.to} onCommit={(v) => set({ from: v })} />
+        <DateFilter label="To" value={query.to} min={query.from} onCommit={(v) => set({ to: v })} />
         {user && (
           <label className="filters__item">
             <span>Status</span>

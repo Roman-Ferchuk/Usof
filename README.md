@@ -17,15 +17,13 @@ A React + Redux single-page app (Create React App) on top of the **usof backend*
 - Validation of every form with readable messages.
 
 ## Screenshots
-Add your screenshots to `docs/screenshots/` and link them here:
+| Main page (filters, pagination) | Post with nested comments |
+|---|---|
+| ![Main page](docs/screenshots/home.png) | ![Post](docs/screenshots/post.png) |
 
-| Page | File |
-|------|------|
-| Main page | `docs/screenshots/home.png` |
-| Post with comments | `docs/screenshots/post.png` |
-| Registration | `docs/screenshots/register.png` |
-| Profile | `docs/screenshots/profile.png` |
-| Admin panel | `docs/screenshots/admin.png` |
+| Registration | Profile | Admin panel |
+|---|---|---|
+| ![Registration](docs/screenshots/register.png) | ![Profile](docs/screenshots/profile.png) | ![Admin](docs/screenshots/admin.png) |
 
 ## Requirements
 - Node.js 18+ (20 or 22 recommended) and npm
@@ -36,24 +34,28 @@ Add your screenshots to `docs/screenshots/` and link them here:
 git clone <your-repository-url>
 cd <repository>
 
-# 1. API (port 3000)
+# 1. Database (MySQL 8 in Docker, port 3306). Wait ~30 s until the log says "ready for connections"
 cd API
+docker compose up -d
+
+# 2. API (port 3000)
+cp .env.example .env        # Windows PowerShell: Copy-Item .env.example .env
 npm install
 npm start
 cd ..
 
-# 2. Web app (port 5173)
-npm install
-npm start            # http://localhost:5173  (`npm run dev` does the same)
+# 3. Web app (port 5173) - from the repository root
+npm install                 # the root postinstall also installs web/
+npm start                   # http://localhost:5173  (`npm run dev` does the same)
 ```
 The dev server proxies `/api`, `/uploads` and `/admin` to `http://localhost:3000`
-(see `src/setupProxy.js`; another address: `API_URL=http://host:port npm start`).
-The port 5173 is set in `.env.development` (the API builds e-mail links from `CLIENT_URL=http://localhost:5173`).
-Production build: `npm run build` → `build/` (static files; the app uses a hash router, so any static host works).
+(see `web/src/setupProxy.js`; another address: `API_URL=http://host:port npm start`).
+The port 5173 is set in `web/.env.development` (the API builds e-mail links from `CLIENT_URL=http://localhost:5173`).
+Production build: `npm run build` → `web/build/` (static files; the app uses a hash router, so any static host works).
 
 Test admin from the seed data: `admin_alex` / `Password123`. Without SMTP settings the confirmation and reset links are printed in the API console.
 
-Never commit `API/.env`: it holds the JWT secret and the mail password (it is in `.gitignore`).
+`API/.env` is never committed (JWT secret, mail password); `API/.env.example` lists every variable.
 
 ## API notes for reviewers
 All routes start with `/api`. Request bodies can be JSON or `application/x-www-form-urlencoded` (plain `curl -d`).
@@ -73,17 +75,27 @@ Only an admin can delete other users' comments; authors can delete their own. De
 
 ## Project structure
 ```
-public/index.html      HTML template of the React app (Create React App)
-src/                   React app
-  index.js             entry point
-  setupProxy.js        dev-server proxy to the API (/api, /uploads, /admin)
-  api/client.js        the only file that knows the API contract
-  store/               Redux Toolkit slices: auth, feed, favorites, stats, ui
-  components/          reusable UI pieces
-  pages/               one component per route (pages/admin/ holds the admin tabs)
-  router.jsx           small hash router (no third-party router)
-API/                   usof backend (+ src/admin: the old stand-alone panel, optional)
+package.json           thin root wrapper: `npm install` / `npm start` / `npm run build` are forwarded to web/
+API/                   usof backend (own package.json, .env.example, docker-compose.yaml)
+  src/admin/           the old stand-alone admin panel served by the API (optional)
+web/                   React app (Create React App)
+  package.json         dependencies of the web app
+  public/index.html    HTML template
+  src/
+    index.js           entry point
+    setupProxy.js      dev-server proxy to the API (/api, /uploads, /admin)
+    api/client.js      the only file that knows the API contract
+    store/             Redux Toolkit slices: auth, feed, favorites, stats, ui
+    components/        reusable UI pieces (Feed, PostCard, Comments, Reactions, ...)
+    pages/             one component per route (pages/admin/ holds the admin tabs)
+    router.jsx         small hash router (no third-party router)
+docs/screenshots/      screenshots used by this README
 ```
+
+## Behaviour worth knowing
+- Comments are sorted by rating, **ascending by default** (as the brief says); the button above the list flips the order. Every level of the tree is sorted separately.
+- You cannot like or dislike your own comment: the buttons are disabled in the UI and the API answers `403`.
+- Date filters (From / To) are applied only when the date is complete (year 1970-2100), so typing the year by hand works.
 
 ## Algorithm of the program
 1. `index.js` mounts `<App/>` inside the Redux `Provider`.
@@ -93,3 +105,14 @@ API/                   usof backend (+ src/admin: the old stand-alone panel, opt
 5. Likes, favourites, locks and subscriptions are sent to the API and update only the affected component.
 6. A `401` answer clears the token and sends the user to the login page.
 7. `PostPage` counts one view per browser session (`POST /api/posts/:id/view`); `Stats` reads `GET /api/stats`; `Admin` renders the tab chosen in `?tab=` and loads it through `/api/admin/*`.
+
+## Progress after each CBL stage
+**Engage.** Big idea: an interface for the usof API. Essential question: how is a frontend for an API different from an ordinary site's frontend? Answer we worked out: the UI has no content of its own, so every screen is a view of API data (loading, empty and error states are part of the design) and every endpoint of the backend challenge needs a visible control. Challenge: build the second step of the usof project as a React app.
+
+**Investigate.** We compared single-page and multi-page apps and chose an SPA, researched common web vulnerabilities (XSS, CSRF, token theft) and the frontend's part in preventing them (React escapes output, no `dangerouslySetInnerHTML`, token only in requests to our own API, input validation), compared pagination types and picked numbered pagination with a changeable page size, because the URL then describes the page and can be shared. We set up a Create React App project, Redux Toolkit for state and a small own hash router instead of a third-party one (third-party frameworks are forbidden). Planning the architecture first (URL as the source of truth for filters, one API client file) paid off later in the Creative part.
+
+**Act: Basic.** Header with service name, search, role/login/avatar and menu on every page; main page with the latest posts, sorting, filtering and pagination; profile page with editable data and the user's own posts; post page with nested comments (comments on comments) sorted by rating; validation of every form.
+
+**Act: Creative.** Statistics page with SVG charts, light/dark theme, sharing (native, copy link, Facebook, X, LinkedIn, Telegram), favourites, e-mail subscriptions, view counter, footer, an admin panel inside the app and multi-photo upload with preview.
+
+**Document & Share.** This README, code comments and the algorithm above; the LinkedIn post is the last step.

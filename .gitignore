@@ -1,10 +1,12 @@
 node_modules/
+web/node_modules/
+API/node_modules/
 dist/
 build/
+web/build/
 .env
 .DS_Store
 *.log
-API/node_modules/
 
 # files uploaded by users while the app runs (the demo images in uploads/posts and uploads/avatars/<seed>.png stay in git)
 API/uploads/images/*

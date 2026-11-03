@@ -102,6 +102,10 @@ class LikeService {
             throw new Error('Comment is locked. Forbidden');
         }
 
+        if (Number(comment.authorId) === Number(authorId)) {
+            throw new Error('You cannot react to your own comment. Forbidden');
+        }
+
         const existingLike = await this.likeRepository.getByUserAndComment(authorId, commentId);
 
         if (existingLike) {

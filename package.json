@@ -1,41 +1,17 @@
 {
-  "name": "usof-frontend",
+  "name": "usof",
   "version": "1.0.0",
   "private": true,
+  "description": "usof: React + Redux client (web/) and Express API (API/)",
   "scripts": {
-    "start": "react-scripts start",
-    "dev": "react-scripts start",
-    "build": "react-scripts build"
-  },
-  "dependencies": {
-    "@reduxjs/toolkit": "^2.2.7",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-redux": "^9.1.2",
-    "react-scripts": "5.0.1"
-  },
-  "devDependencies": {
-    "http-proxy-middleware": "^2.0.6"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "postinstall": "npm --prefix web install",
+    "start": "npm --prefix web start",
+    "dev": "npm --prefix web start",
+    "build": "npm --prefix web run build",
+    "api:install": "npm --prefix API install",
+    "api": "npm --prefix API start"
   },
   "engines": {
     "node": ">=18"
-  },
-  "description": "usof frontend: React + Redux client for the usof API (Create React App)"
+  }
 }

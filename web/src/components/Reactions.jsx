@@ -6,7 +6,7 @@ import { toast } from '../store/uiSlice';
 const SCORE = { like: 1, dislike: -1 };
 
 /* Like / dislike control. `kind` is "posts" or "comments". */
-export default function Reactions({ kind, id, rating, myReaction, locked = false }) {
+export default function Reactions({ kind, id, rating, myReaction, locked = false, own = false }) {
   const user = useSelector((s) => s.auth.user);
   const dispatch = useDispatch();
   const [score, setScore] = useState(rating);
@@ -17,7 +17,7 @@ export default function Reactions({ kind, id, rating, myReaction, locked = false
   useEffect(() => { setScore(rating); setMine(myReaction); }, [rating, myReaction]);
 
   const react = async (type) => {
-    if (!user || locked || busy) return;
+    if (!user || locked || own || busy) return;
     setBusy(true);
     try {
       const previous = mine ? SCORE[mine] : 0;
@@ -37,12 +37,13 @@ export default function Reactions({ kind, id, rating, myReaction, locked = false
 
   let hint;
   if (!user) hint = 'Log in to vote';
+  else if (own) hint = 'You cannot vote on your own comment';
   else if (locked) hint = 'Voting is disabled: this item is locked';
   return (
     <div className="votes" title={hint}>
-      <button type="button" disabled={!user || locked} className={mine === 'like' ? 'is-on' : ''} aria-pressed={mine === 'like'} onClick={() => react('like')} aria-label="Like">▲</button>
+      <button type="button" disabled={!user || locked || own} className={mine === 'like' ? 'is-on' : ''} aria-pressed={mine === 'like'} onClick={() => react('like')} aria-label="Like">▲</button>
       <b aria-label="Rating">{score}</b>
-      <button type="button" disabled={!user || locked} className={mine === 'dislike' ? 'is-on' : ''} aria-pressed={mine === 'dislike'} onClick={() => react('dislike')} aria-label="Dislike">▼</button>
+      <button type="button" disabled={!user || locked || own} className={mine === 'dislike' ? 'is-on' : ''} aria-pressed={mine === 'dislike'} onClick={() => react('dislike')} aria-label="Dislike">▼</button>
     </div>
   );
 }

@@ -56,7 +56,7 @@ INSERT INTO usof_database.likes (id, author_id, type, publish_date, post_id, com
 (1, 1, 'like', '2026-09-01 10:05:00', 1, NULL),
 (2, 3, 'like', '2026-09-01 10:10:00', 1, NULL),
 (3, 2, 'like', '2026-09-01 10:20:00', NULL, 1),
-(4, 4, 'like', '2026-09-02 13:05:00', NULL, 3),
+(4, 2, 'like', '2026-09-02 13:05:00', NULL, 3),
 (5, 5, 'dislike', '2026-09-05 16:00:00', 3, NULL);
 
 -- 8. Favorites

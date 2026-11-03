@@ -67,7 +67,7 @@ function Node({ node, depth, reload, postLocked }) {
   return (
     <li className="thread" style={{ '--depth': depth % 5 }}>
       <div className="comment">
-        <Reactions kind="comments" id={node.id} rating={node.rating} myReaction={node.myReaction} locked={node.locked || postLocked} />
+        <Reactions kind="comments" id={node.id} rating={node.rating} myReaction={node.myReaction} locked={node.locked || postLocked} own={Boolean(isOwner)} />
         <div className="comment__body">
           <div className="row__meta">
             <Link to={`/profile/${node.authorId}`} className="byline"><Avatar user={node.author} size={20} />{node.author.login}</Link>
