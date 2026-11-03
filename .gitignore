@@ -4,7 +4,6 @@ API/node_modules/
 dist/
 build/
 web/build/
-.env
 .DS_Store
 *.log
 

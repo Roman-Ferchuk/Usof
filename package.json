@@ -2,14 +2,12 @@
   "name": "usof",
   "version": "1.0.0",
   "private": true,
-  "description": "usof: React + Redux client (web/) and Express API (API/)",
+  "description": "usof: React frontend (web/) and Dockerized backend (api/)",
   "scripts": {
-    "postinstall": "npm --prefix web install",
-    "start": "npm --prefix web start",
-    "dev": "npm --prefix web start",
-    "build": "npm --prefix web run build",
-    "api:install": "npm --prefix API install",
-    "api": "npm --prefix API start"
+    "postinstall": "npm install --prefix ./web --ignore-scripts",
+    "start": "npm --prefix ./web start",
+    "dev": "npm --prefix ./web start",
+    "build": "npm --prefix ./web run build"
   },
   "engines": {
     "node": ">=18"

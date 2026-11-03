@@ -39,14 +39,13 @@ cd API
 docker compose up -d
 
 # 2. API (port 3000)
-cp .env.example .env        # Windows PowerShell: Copy-Item .env.example .env
 npm install
 npm start
 cd ..
 
 # 3. Web app (port 5173) - from the repository root
-npm install                 # the root postinstall also installs web/
-npm start                   # http://localhost:5173  (`npm run dev` does the same)
+npm install
+npm start
 ```
 The dev server proxies `/api`, `/uploads` and `/admin` to `http://localhost:3000`
 (see `web/src/setupProxy.js`; another address: `API_URL=http://host:port npm start`).
